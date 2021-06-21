@@ -2,6 +2,10 @@
 
 #include <GLFW/glfw3.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <iostream>
 #include <memory>
 
@@ -35,7 +39,11 @@ glfw_key_callback(GLFWwindow* window,
 } // namespace
 
 int
+#ifdef _WIN32
+WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
+#else
 main()
+#endif
 {
   if (glfwInit() != GLFW_TRUE) {
     std::cerr << "Failed to initialize GLFW" << std::endl;
