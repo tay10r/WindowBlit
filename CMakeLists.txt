@@ -4,9 +4,7 @@ project(open_gl_2_template)
 
 include(FetchContent)
 
-FetchContent_Declare(glfw
-  URL "https://github.com/glfw/glfw/archive/master.zip"
-  URL_HASH "SHA256=b7f72f7098e1418657cb95b296baba32543f0996c93ebe3f6e8dfca7374ebab2")
+FetchContent_Declare(glfw URL "https://github.com/glfw/glfw/archive/refs/tags/3.3.4.zip")
 
 FetchContent_MakeAvailable(glfw)
 
