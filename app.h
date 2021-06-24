@@ -7,11 +7,9 @@
 class App
 {
 public:
-  static App* create_app(GLFWwindow* window);
-
   App(GLFWwindow* window);
 
-  virtual ~App() = default;
+  virtual ~App();
 
   virtual void on_frame() = 0;
 
@@ -19,9 +17,29 @@ public:
 
   virtual void on_close() = 0;
 
+  virtual void on_resize(int w, int h) = 0;
+
 protected:
   GLFWwindow* get_glfw_window() noexcept;
 
 private:
   GLFWwindow* m_window;
+};
+
+class AppFactoryBase
+{
+public:
+  virtual ~AppFactoryBase();
+
+  virtual App* create_app(GLFWwindow*) const = 0;
+};
+
+template<typename DerivedApp>
+class AppFactory final : public AppFactoryBase
+{
+public:
+  App* create_app(GLFWwindow* window) const override
+  {
+    return new DerivedApp(window);
+  }
 };

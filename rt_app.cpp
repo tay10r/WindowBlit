@@ -1,8 +1,9 @@
-#include "app.h"
+#include "rt_app.h"
 
 #include "shader.h"
 
 #include <iostream>
+#include <vector>
 
 #include <cstdint>
 
@@ -37,11 +38,31 @@ void main()
 }
 )";
 
-class DemoApp final : public App
+struct Frame final
+{
+  std::vector<float> color;
+  int w = 0;
+  int h = 0;
+
+  void resize(int ww, int hh)
+  {
+    w = 0;
+    h = 0;
+    color.clear();
+
+    color.resize(ww * hh * 3);
+
+    w = ww;
+    h = hh;
+  }
+};
+
+} // namespace
+
+class RtAppImpl final
 {
 public:
-  DemoApp(GLFWwindow* window)
-    : App(window)
+  RtAppImpl(GLFWwindow* window)
   {
     setup_shader_program();
 
@@ -57,30 +78,57 @@ public:
 
     glVertexAttribPointer(
       m_pos_attr_location, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
+
+    int w = 0;
+    int h = 0;
+    glfwGetWindowSize(window, &w, &h);
+
+    m_frame.resize(w, h);
   }
 
-  void on_frame() override
+  ~RtAppImpl()
   {
+    glDeleteBuffers(1, &m_vertex_buffer);
+
+    glDeleteTextures(1, &m_texture);
+
+    glDeleteProgram(m_program);
+  }
+
+  void on_frame(RtApp& rt_app)
+  {
+    rt_app.render(&m_frame.color[0], m_frame.w, m_frame.h);
+
+    glBindTexture(GL_TEXTURE_2D, m_texture);
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB,
+                 m_frame.w,
+                 m_frame.h,
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 &m_frame.color[0]);
+
     glUseProgram(m_program);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glActiveTexture(GL_TEXTURE0);
-
-    glBindTexture(GL_TEXTURE_2D, m_texture);
-
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   }
 
-  void on_close() override {}
+  void on_close() {}
 
-  void on_key(int key, int scancode, int action, int mods) override
+  void on_key(int key, int scancode, int action, int mods)
   {
     (void)key;
     (void)scancode;
     (void)action;
     (void)mods;
   }
+
+  void on_resize(int w, int h) { m_frame.resize(w, h); }
 
 private:
   bool setup_shader_program()
@@ -160,12 +208,38 @@ private:
   GLuint m_program = 0;
 
   GLint m_pos_attr_location = 0;
+
+  Frame m_frame;
 };
 
-} // namespace
+RtApp::RtApp(GLFWwindow* window)
+  : App(window)
+  , m_impl(new RtAppImpl(window))
+{}
 
-App*
-App::create_app(GLFWwindow* window)
+RtApp::~RtApp()
 {
-  return new DemoApp(window);
+  delete m_impl;
 }
+
+void
+RtApp::on_frame()
+{
+  m_impl->on_frame(*this);
+}
+
+void
+RtApp::on_key(int key, int scancode, int action, int mods)
+{
+  m_impl->on_key(key, scancode, action, mods);
+}
+
+void
+RtApp::on_resize(int w, int h)
+{
+  return m_impl->on_resize(w, h);
+}
+
+void
+RtApp::on_close()
+{}
