@@ -21,7 +21,7 @@ public:
 
   void render(float* rgb_buffer, int w, int h) override
   {
-    /* render one sampler per pixel, accumulate in 'rgb_buffer'
+    /* render one sampler per pixel, accumulate in 'rgb_buffer' */
   }
 };
 
@@ -69,3 +69,20 @@ because:
 The code works on Linux and Windows, on any platform that supports OpenGL 3.0
 and greater. Note that VirtualBox does not support OpenGL 3.0 (as of this
 writing), so this code will not work on VirtualBox.
+
+### Dependencies
+
+If you're building this on Ubuntu, you'll need the following libraries to build GLFW:
+
+ - `libxrandr-dev`
+ - `libxinerama-dev`
+ - `libxcursor-dev`
+ - `libxi-dev`
+
+You can run the following command to install them all:
+
+```
+sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+```
+
+All other dependencies are either included or downloaded and built.

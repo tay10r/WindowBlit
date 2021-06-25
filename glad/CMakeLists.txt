@@ -6,8 +6,4 @@ add_library(glad STATIC src/glad.c)
 
 target_include_directories(glad PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-if(WIN32)
-  target_link_libraries(glad PUBLIC ${OPENGL_LIBRARIES})
-else(WIN32)
-  target_link_libraries(glad PUBLIC OpenGL::OpenGL)
-endif(WIN32)
+target_link_libraries(glad PUBLIC ${OPENGL_LIBRARIES})
