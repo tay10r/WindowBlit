@@ -6,6 +6,16 @@ add_subdirectory(glad)
 
 include(FetchContent)
 
+#############
+# Setup GLM #
+#############
+
+FetchContent_Declare(glm
+  URL "https://github.com/g-truc/glm/archive/refs/tags/0.9.9.8.zip"
+  URL_HASH "SHA256=4605259c22feadf35388c027f07b345ad3aa3b12631a5a316347f7566c6f1839")
+
+FetchContent_MakeAvailable(glm)
+
 ##############
 # Setup GLFW #
 ##############
@@ -79,4 +89,4 @@ add_executable(main WIN32
   rt_app.cpp
   main.cpp)
 
-target_link_libraries(main PRIVATE glfw glad btn_imgui)
+target_link_libraries(main PRIVATE glfw glad btn_imgui glm)
