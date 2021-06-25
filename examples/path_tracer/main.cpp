@@ -215,6 +215,8 @@ ExampleApp::on_resize(int w, int h)
 {
   m_accumulator.resize(w * h);
 
+  std::fill(m_accumulator.begin(), m_accumulator.end(), glm::vec3(0, 0, 0));
+
   m_sample_count = 0;
 
   RtApp::on_resize(w, h);

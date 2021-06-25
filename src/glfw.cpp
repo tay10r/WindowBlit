@@ -27,6 +27,14 @@ glfw_error_callback(int /* code */, const char* description)
 }
 
 void
+glfw_resize_callback(GLFWwindow* window, int w, int h)
+{
+  App* app = (App*)glfwGetWindowUserPointer(window);
+
+  app->on_resize(w, h);
+}
+
+void
 glfw_key_callback(GLFWwindow* window,
                   int key,
                   int scancode,
@@ -93,6 +101,8 @@ run_glfw_window(const AppFactoryBase& app_factory)
     glfwSetWindowUserPointer(window, app.get());
 
     glfwSetKeyCallback(window, glfw_key_callback);
+
+    glfwSetWindowSizeCallback(window, glfw_resize_callback);
 
     glfwMakeContextCurrent(window);
 
