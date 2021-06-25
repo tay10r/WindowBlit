@@ -2,7 +2,10 @@
 
 #include "shader.h"
 
+#include <glm/glm.hpp>
+
 #include <iostream>
+#include <memory>
 #include <vector>
 
 #include <cstdint>
@@ -57,12 +60,85 @@ struct Frame final
   }
 };
 
+class Camera
+{
+public:
+  virtual ~Camera() = default;
+
+  virtual void handle_key(int key, int action) = 0;
+
+  virtual bool is_moving() const = 0;
+
+  virtual void move() = 0;
+
+  virtual glm::vec3 get_position() const = 0;
+
+  virtual glm::mat3 get_rotation_transform() const = 0;
+};
+
+class FirstPersonCamera : public Camera
+{
+public:
+  bool is_moving() const override
+  {
+    return m_up_speed || m_left_speed || m_down_speed || m_right_speed;
+  }
+
+  void move() override
+  {
+    glm::vec3 delta(0, 0, 0);
+
+    delta += glm::vec3(0, 0, -1) * m_up_speed;
+    delta += glm::vec3(-1, 0, 0) * m_left_speed;
+    delta += glm::vec3(0, 0, 1) * m_down_speed;
+    delta += glm::vec3(1, 0, 0) * m_right_speed;
+
+    m_position += delta * m_move_speed;
+  }
+
+  void handle_key(int key, int action) override
+  {
+    switch (key) {
+      case GLFW_KEY_W:
+        m_up_speed = (action == GLFW_PRESS) || (action == GLFW_REPEAT);
+        break;
+      case GLFW_KEY_A:
+        m_left_speed = (action == GLFW_PRESS) || (action == GLFW_REPEAT);
+        break;
+      case GLFW_KEY_S:
+        m_down_speed = (action == GLFW_PRESS) || (action == GLFW_REPEAT);
+        break;
+      case GLFW_KEY_D:
+        m_right_speed = (action == GLFW_PRESS) || (action == GLFW_REPEAT);
+        break;
+    }
+  }
+
+  glm::vec3 get_position() const override { return m_position; }
+
+  glm::mat3 get_rotation_transform() const override { return glm::mat3(1.0f); }
+
+private:
+  float m_move_speed = 0.05;
+
+  float m_up_speed = 0.0f;
+
+  float m_left_speed = 0.0f;
+
+  float m_down_speed = 0.0f;
+
+  float m_right_speed = 0.0f;
+
+  glm::vec3 m_position = glm::vec3(0, 0, 0);
+};
+
 } // namespace
 
 class RtAppImpl final
 {
 public:
   RtAppImpl(GLFWwindow* window)
+    : m_camera(new FirstPersonCamera())
   {
     setup_shader_program();
 
@@ -97,6 +173,13 @@ public:
 
   void on_frame(RtApp& rt_app)
   {
+    if (m_camera->is_moving()) {
+
+      m_camera->move();
+
+      rt_app.on_camera_change();
+    }
+
     rt_app.render(&m_frame.color[0], m_frame.w, m_frame.h);
 
     glBindTexture(GL_TEXTURE_2D, m_texture);
@@ -120,15 +203,19 @@ public:
 
   void on_close() {}
 
-  void on_key(int key, int scancode, int action, int mods)
+  void on_key(int key, int /* scancode */, int action, int /* mods */)
   {
-    (void)key;
-    (void)scancode;
-    (void)action;
-    (void)mods;
+    m_camera->handle_key(key, action);
   }
 
   void on_resize(int w, int h) { m_frame.resize(w, h); }
+
+  glm::vec3 get_camera_position() const { return m_camera->get_position(); }
+
+  glm::mat3 get_camera_rotation_transform() const
+  {
+    return m_camera->get_rotation_transform();
+  }
 
 private:
   bool setup_shader_program()
@@ -210,6 +297,8 @@ private:
   GLint m_pos_attr_location = 0;
 
   Frame m_frame;
+
+  std::unique_ptr<Camera> m_camera;
 };
 
 RtApp::RtApp(GLFWwindow* window)
@@ -243,3 +332,19 @@ RtApp::on_resize(int w, int h)
 void
 RtApp::on_close()
 {}
+
+void
+RtApp::on_camera_change()
+{}
+
+glm::vec3
+RtApp::get_camera_position() const
+{
+  return m_impl->get_camera_position();
+}
+
+glm::mat3
+RtApp::get_camera_rotation_transform() const
+{
+  return m_impl->get_camera_rotation_transform();
+}

@@ -2,6 +2,8 @@
 
 #include "app.h"
 
+#include <glm/glm.hpp>
+
 class RtAppImpl;
 
 class RtApp : public App
@@ -22,6 +24,12 @@ public:
   virtual void on_close() override;
 
   virtual void on_resize(int w, int h) override;
+
+  virtual void on_camera_change();
+
+  virtual glm::vec3 get_camera_position() const;
+
+  virtual glm::mat3 get_camera_rotation_transform() const;
 
 private:
   RtAppImpl* m_impl = nullptr;

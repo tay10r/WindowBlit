@@ -105,6 +105,8 @@ public:
 
   void on_resize(int w, int h) override;
 
+  void on_camera_change() override;
+
 private:
   Ray generate_ray(glm::vec2 uv_min, glm::vec2 uv_max, float aspect);
 
@@ -141,6 +143,14 @@ ExampleApp::ExampleApp(GLFWwindow* window)
   m_accumulator.resize(w * h);
 
   create_scene();
+}
+
+void
+ExampleApp::on_camera_change()
+{
+  std::fill(m_accumulator.begin(), m_accumulator.end(), glm::vec3(0, 0, 0));
+
+  m_sample_count = 0;
 }
 
 void
@@ -218,7 +228,7 @@ ExampleApp::generate_ray(glm::vec2 uv_min, glm::vec2 uv_max, float aspect)
   float u = x_dist(m_rng);
   float v = y_dist(m_rng);
 
-  glm::vec3 org(0, 0, 0);
+  glm::vec3 org = get_camera_position();
 
   glm::vec3 dir(((2.0f * u) - 1.0f) * aspect, 1.0f - (2.0f * v), -1.0f);
 
