@@ -2,10 +2,17 @@
 
 #include "shader.h"
 
+#include "stb_image_write.h"
+
 #include <glm/glm.hpp>
 
+#include <imgui.h>
+
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <vector>
 
 #include <cstdint>
@@ -173,6 +180,8 @@ public:
 
   void on_frame(RtApp& rt_app)
   {
+    render_gui();
+
     if (m_camera->is_moving()) {
 
       m_camera->move();
@@ -218,6 +227,18 @@ public:
   }
 
 private:
+  void render_gui()
+  {
+    ImGui::Begin("Control");
+
+    ImGui::Text("FPS = %.1f", 1000.0f / ImGui::GetIO().Framerate);
+
+    if (ImGui::Button("Save PNG"))
+      save_png();
+
+    ImGui::End();
+  }
+
   bool setup_shader_program()
   {
     auto vert_shader =
@@ -285,6 +306,56 @@ private:
 
     glTexImage2D(
       GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_FLOAT, initColorBuf);
+  }
+
+  bool save_png() const
+  {
+    auto path = get_png_path();
+
+    if (path.empty())
+      return false;
+
+    return save_png(path.c_str());
+  }
+
+  bool save_png(const char* path) const
+  {
+    using byte = unsigned char;
+
+    std::vector<byte> data(m_frame.w * m_frame.h * 3);
+
+    for (int i = 0; i < data.size(); i++)
+      data[i] = std::max(std::min(m_frame.color[i] * 255.0f, 255.0f), 0.0f);
+
+    int pitch = m_frame.w * 3;
+
+    return stbi_write_png(path, m_frame.w, m_frame.h, 3, &data[0], pitch);
+  }
+
+  static std::string get_png_path()
+  {
+    for (int i = 0; i < 1024; i++) {
+
+      std::ostringstream stream;
+
+      stream << "snapshot-";
+      stream << std::setfill('0') << std::setw(4) << i;
+      stream << ".png";
+
+      auto path = stream.str();
+
+      if (!file_exists(path))
+        return path;
+    }
+
+    return "";
+  }
+
+  static bool file_exists(const std::string& path)
+  {
+    std::ifstream file(path.c_str());
+
+    return file.good();
   }
 
 private:

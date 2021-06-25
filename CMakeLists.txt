@@ -87,6 +87,8 @@ add_executable(main WIN32
   shader.cpp
   rt_app.h
   rt_app.cpp
+  stb_image_write.h
+  stb_image_write.c
   main.cpp)
 
 target_link_libraries(main PRIVATE glfw glad btn_imgui glm)

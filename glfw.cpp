@@ -105,10 +105,6 @@ run_glfw_window(const AppFactoryBase& app_factory)
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glClear(GL_COLOR_BUFFER_BIT);
 
-      app->on_frame();
-
-      assert(glGetError() == GL_NO_ERROR);
-
       glfwPollEvents();
 
       ImGui_ImplOpenGL3_NewFrame();
@@ -117,11 +113,7 @@ run_glfw_window(const AppFactoryBase& app_factory)
 
       ImGui::NewFrame();
 
-      ImGui::Begin("asdf");
-
-      ImGui::Text("asdfasdfasdf");
-
-      ImGui::End();
+      app->on_frame();
 
       ImGui::Render();
 
