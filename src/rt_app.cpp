@@ -1,4 +1,4 @@
-#include "rt_app.h"
+#include <btn/rt_app.h>
 
 #include "shader.h"
 
@@ -16,6 +16,8 @@
 #include <vector>
 
 #include <cstdint>
+
+namespace btn {
 
 namespace {
 
@@ -231,7 +233,7 @@ private:
   {
     ImGui::Begin("Control");
 
-    ImGui::Text("FPS = %.1f", 1000.0f / ImGui::GetIO().Framerate);
+    ImGui::Text("FPS = %.1f", ImGui::GetIO().Framerate);
 
     if (ImGui::Button("Save PNG"))
       save_png();
@@ -419,3 +421,5 @@ RtApp::get_camera_rotation_transform() const
 {
   return m_impl->get_camera_rotation_transform();
 }
+
+} // namespace btn

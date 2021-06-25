@@ -5,6 +5,8 @@
 #include <iosfwd>
 #include <string>
 
+namespace btn {
+
 /// Attempts to compile a shader.
 ///
 /// @return On success, the ID of the shader is returned.
@@ -22,3 +24,5 @@ GLuint
 link_shader_program(GLuint vert_shader,
                     GLuint frag_shader,
                     std::ostream& errlog);
+
+} // namespace btn

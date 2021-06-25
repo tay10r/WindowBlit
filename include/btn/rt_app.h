@@ -1,8 +1,13 @@
 #pragma once
 
-#include "app.h"
+#ifndef BTN_RT_APP_H_INCLUDED
+#define BTN_RT_APP_H_INCLUDED
+
+#include <btn/app.h>
 
 #include <glm/glm.hpp>
+
+namespace btn {
 
 class RtAppImpl;
 
@@ -34,3 +39,7 @@ public:
 private:
   RtAppImpl* m_impl = nullptr;
 };
+
+} // namespace btn
+
+#endif // BTN_RT_APP_H_INCLUDED

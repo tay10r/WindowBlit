@@ -75,20 +75,43 @@ target_include_directories(btn_imgui
 target_link_libraries(btn_imgui PUBLIC glad glfw)
 
 #################
-# Build Program #
+# Build Library #
 #################
 
-add_executable(main WIN32
-  app.h
-  app.cpp
-  glfw.h
-  glfw.cpp
-  shader.h
-  shader.cpp
-  rt_app.h
-  rt_app.cpp
-  stb_image_write.h
-  stb_image_write.c
-  main.cpp)
+add_library(better_than_netpbm
+  include/btn/app.h
+  include/btn/glfw.h
+  include/btn/rt_app.h
+  src/app.cpp
+  src/glfw.cpp
+  src/shader.h
+  src/shader.cpp
+  src/rt_app.cpp
+  src/stb_image_write.h
+  src/stb_image_write.c)
 
-target_link_libraries(main PRIVATE glfw glad btn_imgui glm)
+target_include_directories(better_than_netpbm PUBLIC "${PROJECT_SOURCE_DIR}/include")
+
+target_link_libraries(better_than_netpbm PUBLIC glfw glad btn_imgui glm)
+
+##################
+# Build Examples #
+##################
+
+set(examples
+  minimal
+  path_tracer)
+
+foreach(example ${examples})
+
+  set(target better_than_netpbm_example_${example})
+
+  add_executable(${target} WIN32 examples/${example}/main.cpp)
+
+  target_link_libraries(${target} better_than_netpbm)
+
+  set_target_properties(${target}
+    PROPERTIES
+      OUTPUT_NAME ${example})
+
+endforeach(example ${examples})

@@ -2,6 +2,8 @@
 
 #include <ostream>
 
+namespace btn {
+
 GLuint
 compile_shader(GLenum shader_type,
                const std::string& source,
@@ -90,3 +92,5 @@ link_shader_program(GLuint vert_shader,
 
   return 0;
 }
+
+} // namespace btn

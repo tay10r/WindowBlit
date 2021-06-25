@@ -11,24 +11,23 @@ path tracer at each iteration, while requiring very little boilerplate code.
 Here is an example:
 
 ```cpp
-#include "rt_app.h"
-#include "glfw.h"
+#include <btn/btn.h>
 
-class Example final : public RtApp
+class Example final : public btn::RtApp
 {
 public:
-  using RtApp::RtApp;
+  using btn::RtApp::RtApp;
 
   void render(float* rgb_buffer, int w, int h) override
   {
-    /* render one sampler per pixel, accumulate in 'rgb_buffer' */
+    /* 'rgb_buffer' is copied to the window after this function. */
   }
 };
 
 int
 main()
 {
-  return run_glfw_window(AppFactory<Example>());
+  return btn::run_glfw_window(btn::AppFactory<Example>());
 }
 ```
 
@@ -62,13 +61,14 @@ because:
 
  - Results will show up faster (no need to wait for the whole render)
  - No need to enter a second command in order to open an image viewer
- - On Windows, there is no program to open Netpbm files, so this elimates that headache.
+ - On Windows, there is no program to open Netpbm files, so there's no need to install other software.
 
 ### Portability
 
 The code works on Linux and Windows, on any platform that supports OpenGL 3.0
 and greater. Note that VirtualBox does not support OpenGL 3.0 (as of this
-writing), so this code will not work on VirtualBox.
+writing), so this code will not work on VirtualBox. VMware workstation player
+does support OpenGL 3.0, if you need to be using a virtual machine.
 
 ### Dependencies
 

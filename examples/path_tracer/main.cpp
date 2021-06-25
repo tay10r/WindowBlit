@@ -1,5 +1,4 @@
-#include "glfw.h"
-#include "rt_app.h"
+#include <btn/btn.h>
 
 #include <glm/glm.hpp>
 
@@ -96,7 +95,7 @@ to_hit(const Ray& ray,
   return Hit{ primitive, p, n };
 }
 
-class ExampleApp final : public RtApp
+class ExampleApp final : public btn::RtApp
 {
 public:
   ExampleApp(GLFWwindow* window);
@@ -189,6 +188,8 @@ ExampleApp::render(float* rgb_buffer, int w, int h)
   float rcp_w = 1.0f / w;
   float rcp_h = 1.0f / h;
 
+  float sample_weight = 1.0f / m_sample_count;
+
   for (int i = 0; i < (w * h); i++) {
 
     int x = i % w;
@@ -201,9 +202,9 @@ ExampleApp::render(float* rgb_buffer, int w, int h)
 
     m_accumulator[i] += trace(ray);
 
-    rgb_buffer[(i * 3) + 0] = m_accumulator[i].x / m_sample_count;
-    rgb_buffer[(i * 3) + 1] = m_accumulator[i].y / m_sample_count;
-    rgb_buffer[(i * 3) + 2] = m_accumulator[i].z / m_sample_count;
+    rgb_buffer[(i * 3) + 0] = m_accumulator[i].x * sample_weight;
+    rgb_buffer[(i * 3) + 1] = m_accumulator[i].y * sample_weight;
+    rgb_buffer[(i * 3) + 2] = m_accumulator[i].z * sample_weight;
   }
 
   m_sample_count++;
@@ -291,5 +292,5 @@ wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
 main()
 #endif
 {
-  return run_glfw_window(AppFactory<ExampleApp>());
+  return btn::run_glfw_window(btn::AppFactory<ExampleApp>());
 }

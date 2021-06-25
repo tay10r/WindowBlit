@@ -1,8 +1,13 @@
 #pragma once
 
+#ifndef BTN_APP_H_INCLUDED
+#define BTN_APP_H_INCLUDED
+
 #include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
+
+namespace btn {
 
 class App
 {
@@ -43,3 +48,7 @@ public:
     return new DerivedApp(window);
   }
 };
+
+} // namespace btn
+
+#endif // BTN_APP_H_INCLUDED

@@ -1,4 +1,6 @@
-#include "app.h"
+#include <btn/app.h>
+
+namespace btn {
 
 App::App(GLFWwindow* window)
   : m_window(window)
@@ -13,3 +15,5 @@ App::get_glfw_window() noexcept
 }
 
 AppFactoryBase::~AppFactoryBase() = default;
+
+} // namespace btn
