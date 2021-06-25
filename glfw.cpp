@@ -4,6 +4,10 @@
 
 #include <GLFW/glfw3.h>
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -67,6 +71,22 @@ run_glfw_window(const AppFactoryBase& app_factory)
 
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
+  int display_w = 0, display_h = 0;
+
+  glfwGetFramebufferSize(window, &display_w, &display_h);
+
+  glViewport(0, 0, display_w, display_h);
+
+  IMGUI_CHECKVERSION();
+
+  ImGui::CreateContext();
+
+  ImGui::StyleColorsDark();
+
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
+
+  ImGui_ImplOpenGL2_Init();
+
   {
     // Scoped so that the smart pointer is destroyed before GLFW window.
 
@@ -76,17 +96,56 @@ run_glfw_window(const AppFactoryBase& app_factory)
 
     glfwSetKeyCallback(window, glfw_key_callback);
 
+    glfwMakeContextCurrent(window);
+
     while (!glfwWindowShouldClose(window)) {
+
+      glClearColor(0, 0, 0, 1);
+
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glClear(GL_COLOR_BUFFER_BIT);
 
       app->on_frame();
 
-      glfwSwapBuffers(window);
+      assert(glGetError() == GL_NO_ERROR);
 
       glfwPollEvents();
+
+      ImGui_ImplOpenGL2_NewFrame();
+
+      ImGui_ImplGlfw_NewFrame();
+
+      ImGui::NewFrame();
+
+      ImGui::Begin("asdf");
+
+      ImGui::Text("asdfasdfasdf");
+
+      ImGui::End();
+
+      ImGui::Render();
+
+      int display_w = 0, display_h = 0;
+
+      glfwGetFramebufferSize(window, &display_w, &display_h);
+
+      glViewport(0, 0, display_w, display_h);
+
+      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+      glfwMakeContextCurrent(window);
+
+      glfwSwapBuffers(window);
     }
 
     app->on_close();
   }
+
+  ImGui_ImplOpenGL3_Shutdown();
+
+  ImGui_ImplGlfw_Shutdown();
+
+  ImGui::DestroyContext();
 
   glfwDestroyWindow(window);
 

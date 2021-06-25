@@ -32,8 +32,7 @@ ExampleApp::render(float* rgb_buffer, int w, int h)
 
 int
 #ifdef _WIN32
-  WINAPI
-  wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
+wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
 #else
 main()
 #endif
