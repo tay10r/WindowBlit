@@ -68,7 +68,7 @@ target_link_libraries(btn_imgui PUBLIC glad glfw)
 # Build Program #
 #################
 
-add_executable(main
+add_executable(main WIN32
   app.h
   app.cpp
   glfw.h

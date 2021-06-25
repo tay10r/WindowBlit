@@ -85,7 +85,7 @@ run_glfw_window(const AppFactoryBase& app_factory)
 
   ImGui_ImplGlfw_InitForOpenGL(window, true);
 
-  ImGui_ImplOpenGL2_Init();
+  ImGui_ImplOpenGL3_Init();
 
   {
     // Scoped so that the smart pointer is destroyed before GLFW window.
@@ -111,7 +111,7 @@ run_glfw_window(const AppFactoryBase& app_factory)
 
       glfwPollEvents();
 
-      ImGui_ImplOpenGL2_NewFrame();
+      ImGui_ImplOpenGL3_NewFrame();
 
       ImGui_ImplGlfw_NewFrame();
 

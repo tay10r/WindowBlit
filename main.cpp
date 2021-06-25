@@ -1,6 +1,10 @@
 #include "glfw.h"
 #include "rt_app.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace {
 
 class ExampleApp final : public RtApp

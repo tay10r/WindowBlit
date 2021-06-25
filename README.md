@@ -63,3 +63,9 @@ because:
  - Results will show up faster (no need to wait for the whole render)
  - No need to enter a second command in order to open an image viewer
  - On Windows, there is no program to open Netpbm files, so this elimates that headache.
+
+### Portability
+
+The code works on Linux and Windows, on any platform that supports OpenGL 3.0
+and greater. Note that VirtualBox does not support OpenGL 3.0 (as of this
+writing), so this code will not work on VirtualBox.
