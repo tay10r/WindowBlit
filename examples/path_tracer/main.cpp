@@ -179,13 +179,13 @@ ExampleApp::create_scene()
   m_materials.emplace_back(emissive_mat_a);
   m_materials.emplace_back(emissive_mat_b);
 
-  m_spheres.emplace_back(Sphere{ glm::vec3(-1.2, 0, -1), 0.5f });
+  m_spheres.emplace_back(Sphere{ glm::vec3(-1.2, 0, -3), 0.5f });
 
-  m_spheres.emplace_back(Sphere{ glm::vec3(0, 0, -1), 0.5f });
+  m_spheres.emplace_back(Sphere{ glm::vec3(0, 0, -3), 0.5f });
 
-  m_spheres.emplace_back(Sphere{ glm::vec3(1.2, 0, -1), 0.5f });
+  m_spheres.emplace_back(Sphere{ glm::vec3(1.2, 0, -3), 0.5f });
 
-  m_spheres.emplace_back(Sphere{ glm::vec3(0, -100.5, -1), 100 });
+  m_spheres.emplace_back(Sphere{ glm::vec3(0, -100.5, -3), 100 });
 
   // Assign the emissive materials to the first and third smaller spheres.
 
@@ -221,7 +221,7 @@ ExampleApp::render(float* rgb_buffer, int w, int h)
   float rcp_w = 1.0f / w;
   float rcp_h = 1.0f / h;
 
-  float sample_weight = 1.0f / m_sample_count;
+  float sample_weight = 1.0f / (m_sample_count + 1.0f);
 
   for (int i = 0; i < (w * h); i++) {
 
@@ -261,12 +261,16 @@ ExampleApp::generate_ray(glm::vec2 uv_min, glm::vec2 uv_max, float aspect)
   std::uniform_real_distribution<float> x_dist(uv_min.x, uv_max.x);
   std::uniform_real_distribution<float> y_dist(uv_min.y, uv_max.y);
 
+  float fov_x = 0.5 * aspect;
+  float fov_y = 0.5;
+
   float u = x_dist(m_rng);
   float v = y_dist(m_rng);
 
   glm::vec3 org = get_camera_position();
 
-  glm::vec3 dir(((2.0f * u) - 1.0f) * aspect, 1.0f - (2.0f * v), -1.0f);
+  glm::vec3 dir(
+    ((2.0f * u) - 1.0f) * fov_x, (1.0f - (2.0f * v)) * fov_y, -1.0f);
 
   return Ray{ org, get_camera_rotation_transform() * glm::normalize(dir) };
 }
