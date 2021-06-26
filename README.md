@@ -63,6 +63,49 @@ because:
  - No need to enter a second command in order to open an image viewer
  - On Windows, there is no program to open Netpbm files, so there's no need to install other software.
 
+### A More Complete Example
+
+In a window environment, things can get a little more involved because the
+window can be resized and the camera can be moved. While the example above is
+sufficient to get started, you will eventually want to overload other virtual
+functions in the class. Here's a more complete example.
+
+```cxx
+#include <btn/btn.h>
+
+class Example final : public btn::RtApp
+{
+public:
+  using btn::RtApp::RtApp;
+
+  void render(float* rgb_buffer, int w, int h) override
+  {
+    /* 'rgb_buffer' is copied to the window after this function. */
+
+    /* Hint: Use 'get_camera_position()' and 'get_camera_rotation_transform()'
+             to apply camera motion to the window. */
+  }
+
+  void on_resize(int w, int h) override
+  {
+    /* Override this function if needed. If storing a seperate RGB buffer,
+       it should be resized here. For path tracers, this will usually require
+       restarting the current frame. */
+  }
+
+  void on_camera_change() override
+  {
+    /* for path tracers, this will usually require restarting the current frame.
+  }
+};
+
+int
+main()
+{
+  return btn::run_glfw_window(btn::AppFactory<Example>());
+}
+```
+
 ### Building the Examples
 
 By default, the examples are not built. To build them, pass the following option
