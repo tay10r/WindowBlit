@@ -35,6 +35,25 @@ glfw_resize_callback(GLFWwindow* window, int w, int h)
 }
 
 void
+glfw_cursor_motion_callback(GLFWwindow* window, double x, double y)
+{
+  App* app = (App*)glfwGetWindowUserPointer(window);
+
+  app->on_cursor_motion(x, y);
+}
+
+void
+glfw_cursor_button_callback(GLFWwindow* window,
+                            int button,
+                            int action,
+                            int mods)
+{
+  App* app = (App*)glfwGetWindowUserPointer(window);
+
+  app->on_cursor_button(button, action, mods);
+}
+
+void
 glfw_key_callback(GLFWwindow* window,
                   int key,
                   int scancode,
@@ -103,6 +122,10 @@ run_glfw_window(const AppFactoryBase& app_factory)
     glfwSetKeyCallback(window, glfw_key_callback);
 
     glfwSetWindowSizeCallback(window, glfw_resize_callback);
+
+    glfwSetCursorPosCallback(window, glfw_cursor_motion_callback);
+
+    glfwSetMouseButtonCallback(window, glfw_cursor_button_callback);
 
     glfwMakeContextCurrent(window);
 

@@ -36,6 +36,12 @@ public:
 
   virtual glm::mat3 get_camera_rotation_transform() const;
 
+  virtual void on_cursor_button(int button, int action, int mods) override;
+
+  void on_cursor_motion(double x, double y) override;
+
+  virtual void on_cursor_motion(double x, double y, double dx, double dy);
+
 private:
   RtAppImpl* m_impl = nullptr;
 };

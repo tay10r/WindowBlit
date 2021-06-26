@@ -235,7 +235,7 @@ ExampleApp::generate_ray(glm::vec2 uv_min, glm::vec2 uv_max, float aspect)
 
   glm::vec3 dir(((2.0f * u) - 1.0f) * aspect, 1.0f - (2.0f * v), -1.0f);
 
-  return Ray{ org, glm::normalize(dir) };
+  return Ray{ org, get_camera_rotation_transform() * glm::normalize(dir) };
 }
 
 glm::vec3

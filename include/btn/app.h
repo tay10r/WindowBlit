@@ -20,6 +20,10 @@ public:
 
   virtual void on_key(int key, int scancode, int action, int mods) = 0;
 
+  virtual void on_cursor_button(int button, int action, int mods) = 0;
+
+  virtual void on_cursor_motion(double x, double y) = 0;
+
   virtual void on_close() = 0;
 
   virtual void on_resize(int w, int h) = 0;

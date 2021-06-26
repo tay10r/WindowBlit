@@ -5,6 +5,7 @@
 #include "stb_image_write.h"
 
 #include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
 
 #include <imgui.h>
 
@@ -15,7 +16,14 @@
 #include <sstream>
 #include <vector>
 
+#define _USE_MATH_DEFINES 1
+
+#include <cmath>
 #include <cstdint>
+
+#ifndef M_PI
+#define M_PI 3.1415f
+#endif
 
 namespace btn {
 
@@ -76,8 +84,13 @@ public:
 
   virtual void handle_key(int key, int action) = 0;
 
+  virtual void handle_relative_motion(float dx, float dy) = 0;
+
+  /// Indicates, based on the move state, if the camera will move on the next
+  /// frame.
   virtual bool is_moving() const = 0;
 
+  /// Performs translation based on move state.
   virtual void move() = 0;
 
   virtual glm::vec3 get_position() const = 0;
@@ -102,7 +115,9 @@ public:
     delta += glm::vec3(0, 0, 1) * m_down_speed;
     delta += glm::vec3(1, 0, 0) * m_right_speed;
 
-    m_position += delta * m_move_speed;
+    auto world_delta = get_rotation_transform() * glm::normalize(delta);
+
+    m_position += world_delta * m_move_speed;
   }
 
   void handle_key(int key, int action) override
@@ -123,9 +138,20 @@ public:
     }
   }
 
+  void handle_relative_motion(float dx, float dy) override
+  {
+    m_angle_x += dy * M_PI;
+    m_angle_y += dx * M_PI;
+    std::cout << m_angle_x << ' ' << m_angle_y << std::endl;
+  }
+
   glm::vec3 get_position() const override { return m_position; }
 
-  glm::mat3 get_rotation_transform() const override { return glm::mat3(1.0f); }
+  glm::mat3 get_rotation_transform() const override
+  {
+    return glm::rotate(m_angle_y, glm::vec3(0, 1, 0)) *
+           glm::rotate(m_angle_x, glm::vec3(1, 0, 0));
+  }
 
 private:
   float m_move_speed = 0.05;
@@ -137,6 +163,10 @@ private:
   float m_down_speed = 0.0f;
 
   float m_right_speed = 0.0f;
+
+  float m_angle_x = 0;
+
+  float m_angle_y = 0;
 
   glm::vec3 m_position = glm::vec3(0, 0, 0);
 };
@@ -213,6 +243,48 @@ public:
   }
 
   void on_close() {}
+
+  bool frame_clicked() const noexcept { return m_frame_clicked; }
+
+  void on_cursor_motion(double x, double y, RtApp& app)
+  {
+    if (!m_frame_clicked)
+      return;
+
+    if (!m_frame_pos_initialized) {
+
+      m_last_frame_pos = glm::vec2(x, y);
+
+      m_frame_pos_initialized = true;
+    }
+
+    float dx = x - m_last_frame_pos.x;
+    float dy = y - m_last_frame_pos.y;
+
+    m_last_frame_pos.x = x;
+    m_last_frame_pos.y = y;
+
+    app.on_cursor_motion(x, y, dx, dy);
+  }
+
+  void on_cursor_motion(double /* x */, double /* y */, double dx, double dy)
+  {
+    m_camera->handle_relative_motion(dx, dy);
+  }
+
+  void on_cursor_button(int button, int action, int /* mods */)
+  {
+    if (ImGui::GetIO().WantCaptureMouse)
+      return;
+
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+
+      m_frame_clicked = (action == GLFW_PRESS);
+
+      if (m_frame_clicked)
+        m_frame_pos_initialized = false;
+    }
+  }
 
   void on_key(int key, int /* scancode */, int action, int /* mods */)
   {
@@ -372,6 +444,12 @@ private:
   Frame m_frame;
 
   std::unique_ptr<Camera> m_camera;
+
+  bool m_frame_clicked = false;
+
+  bool m_frame_pos_initialized = false;
+
+  glm::vec2 m_last_frame_pos = glm::vec2(0, 0);
 };
 
 RtApp::RtApp(GLFWwindow* window)
@@ -420,6 +498,33 @@ glm::mat3
 RtApp::get_camera_rotation_transform() const
 {
   return m_impl->get_camera_rotation_transform();
+}
+
+void
+RtApp::on_cursor_motion(double x, double y)
+{
+  if (!m_impl->frame_clicked())
+    return;
+
+  int xMax = 0;
+  int yMax = 0;
+  glfwGetWindowSize(get_glfw_window(), &xMax, &yMax);
+
+  m_impl->on_cursor_motion(x / xMax, y / yMax, *this);
+
+  on_camera_change();
+}
+
+void
+RtApp::on_cursor_button(int button, int action, int mods)
+{
+  m_impl->on_cursor_button(button, action, mods);
+}
+
+void
+RtApp::on_cursor_motion(double x, double y, double dx, double dy)
+{
+  m_impl->on_cursor_motion(x, y, dx, dy);
 }
 
 } // namespace btn
