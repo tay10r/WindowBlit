@@ -43,6 +43,8 @@ public:
   virtual void on_cursor_motion(double x, double y, double dx, double dy);
 
 private:
+  friend RtAppImpl;
+
   RtAppImpl* m_impl = nullptr;
 };
 

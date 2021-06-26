@@ -28,6 +28,8 @@ struct Hit final
 {
   int primitive = -1;
 
+  int material = 0;
+
   glm::vec3 pos;
 
   glm::vec3 nrm;
@@ -40,6 +42,8 @@ struct Sphere final
   glm::vec3 center = glm::vec3(0, 0, 0);
 
   float radius = 1;
+
+  int material = 0;
 };
 
 struct SphereHit final
@@ -92,8 +96,15 @@ to_hit(const Ray& ray,
   const float bias = 0.001f;
   auto p = ray.org + (ray.dir * (sphere_hit.distance - bias));
   auto n = (p - sphere.center) / sphere.radius;
-  return Hit{ primitive, p, n };
+  return Hit{ primitive, sphere.material, p, n };
 }
+
+struct Material final
+{
+  glm::vec3 diffuse = glm::vec3(0.8, 0.8, 0.8);
+
+  glm::vec3 emission = glm::vec3(0, 0, 0);
+};
 
 class ExampleApp final : public btn::RtApp
 {
@@ -128,6 +139,8 @@ private:
   int m_sample_count = 0;
 
   std::vector<Sphere> m_spheres;
+
+  std::vector<Material> m_materials;
 };
 
 ExampleApp::ExampleApp(GLFWwindow* window)
@@ -155,9 +168,29 @@ ExampleApp::on_camera_change()
 void
 ExampleApp::create_scene()
 {
+  Material diffuse_mat;
+  Material emissive_mat_a;
+  Material emissive_mat_b;
+
+  emissive_mat_a.emission = glm::vec3(1, 0, 1);
+  emissive_mat_b.emission = glm::vec3(0, 1, 1);
+
+  m_materials.emplace_back(diffuse_mat);
+  m_materials.emplace_back(emissive_mat_a);
+  m_materials.emplace_back(emissive_mat_b);
+
+  m_spheres.emplace_back(Sphere{ glm::vec3(-1.2, 0, -1), 0.5f });
+
   m_spheres.emplace_back(Sphere{ glm::vec3(0, 0, -1), 0.5f });
 
+  m_spheres.emplace_back(Sphere{ glm::vec3(1.2, 0, -1), 0.5f });
+
   m_spheres.emplace_back(Sphere{ glm::vec3(0, -100.5, -1), 100 });
+
+  // Assign the emissive materials to the first and third smaller spheres.
+
+  m_spheres[0].material = 1;
+  m_spheres[2].material = 2;
 }
 
 Hit
@@ -252,7 +285,11 @@ ExampleApp::trace(const Ray& ray, int depth)
   auto refl_pos = hit.pos;
   auto refl_dir = glm::normalize(hit.nrm + sample_unit_sphere());
 
-  return trace(Ray{ refl_pos, refl_dir }, depth + 1) * 0.5f;
+  const auto& material = m_materials[hit.material];
+
+  auto diffuse = trace(Ray{ refl_pos, refl_dir }, depth + 1) * material.diffuse;
+
+  return diffuse + material.emission;
 }
 
 glm::vec3

@@ -142,7 +142,6 @@ public:
   {
     m_angle_x += dy * M_PI;
     m_angle_y += dx * M_PI;
-    std::cout << m_angle_x << ' ' << m_angle_y << std::endl;
   }
 
   glm::vec3 get_position() const override { return m_position; }
@@ -212,7 +211,7 @@ public:
 
   void on_frame(RtApp& rt_app)
   {
-    render_gui();
+    render_gui(rt_app);
 
     if (m_camera->is_moving()) {
 
@@ -301,7 +300,7 @@ public:
   }
 
 private:
-  void render_gui()
+  void render_gui(RtApp& rt_app)
   {
     ImGui::Begin("Control");
 
@@ -309,6 +308,9 @@ private:
 
     if (ImGui::Button("Save PNG"))
       save_png();
+
+    if (ImGui::Button("Quit"))
+      glfwSetWindowShouldClose(rt_app.get_glfw_window(), true);
 
     ImGui::End();
   }
