@@ -95,7 +95,7 @@ public:
 
   void on_camera_change() override
   {
-    /* for path tracers, this will usually require restarting the current frame.
+    /* for path tracers, this will usually require restarting the current frame. */
   }
 };
 
@@ -145,12 +145,14 @@ The easiest way to integrate this project is to use CMake's `FetchContent`
 module.
 
 ```cmake
+# Note that this requires CMake 3.14.7 and above. CMake 3.14.7 was released on
+# September 30th, 2019.
 include(FetchContent)
 FetchContent_Declare(better_than_netpbm URL "https://github.com/tay10r/betterthannetpbm/archive/master.zip")
 FetchContent_MakeAvailable(better_than_netpbm)
 ```
 
-Or you can add it as a Git submodule and then just include it in your cmake
+You can also add it as a Git submodule and then just include it in your cmake
 build like this:
 
 ```cmake
