@@ -63,6 +63,15 @@ because:
  - No need to enter a second command in order to open an image viewer
  - On Windows, there is no program to open Netpbm files, so there's no need to install other software.
 
+### Building the Examples
+
+By default, the examples are not built. To build them, pass the following option
+when configuring the CMake build.
+
+```cmake
+cmake -DBTN_EXAMPLES=ON
+```
+
 ### Portability
 
 The code works on Linux and Windows, on any platform that supports OpenGL 3.0
@@ -86,3 +95,31 @@ sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
 ```
 
 All other dependencies are either included or downloaded and built.
+
+### Integration
+
+The easiest way to integrate this project is to use CMake's `FetchContent`
+module.
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(better_than_netpbm URL "https://github.com/tay10r/betterthannetpbm/archive/master.zip")
+FetchContent_MakeAvailable(better_than_netpbm)
+```
+
+Or you can add it as a Git submodule and then just include it in your cmake
+build like this:
+
+```cmake
+add_subdirectory(path/to/better_than_netpbm)
+```
+
+Once either of the two steps above have been done, just link to the library.
+
+```cmake
+target_link_libraries(my_path_tracer PRIVATE better_than_netpbm)
+```
+
+Note that with this library comes GLM. If you're starting a path tracer from
+scratch, you can leverage GLM by either linking to `better_than_netpbm` or by
+linking to the `glm` target.

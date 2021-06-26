@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.14.7)
 
 project(better_than_netpbm)
 
+option(BTN_EXAMPLES "Whether or not to build the examples." OFF)
+
 add_subdirectory(glad)
 
 include(FetchContent)
@@ -98,20 +100,24 @@ target_link_libraries(better_than_netpbm PUBLIC glfw glad btn_imgui glm)
 # Build Examples #
 ##################
 
-set(examples
-  minimal
-  path_tracer)
+if(BTN_EXAMPLES)
 
-foreach(example ${examples})
+  set(examples
+    minimal
+    path_tracer)
 
-  set(target better_than_netpbm_example_${example})
+  foreach(example ${examples})
 
-  add_executable(${target} WIN32 examples/${example}/main.cpp)
+    set(target better_than_netpbm_example_${example})
 
-  target_link_libraries(${target} better_than_netpbm)
+    add_executable(${target} WIN32 examples/${example}/main.cpp)
 
-  set_target_properties(${target}
-    PROPERTIES
-      OUTPUT_NAME ${example})
+    target_link_libraries(${target} better_than_netpbm)
 
-endforeach(example ${examples})
+    set_target_properties(${target}
+      PROPERTIES
+        OUTPUT_NAME ${example})
+
+  endforeach(example ${examples})
+
+endif(BTN_EXAMPLES)
