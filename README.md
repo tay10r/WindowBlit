@@ -148,7 +148,7 @@ module.
 # Note that this requires CMake 3.14.7 and above. CMake 3.14.7 was released on
 # September 30th, 2019.
 include(FetchContent)
-FetchContent_Declare(better_than_netpbm URL "https://github.com/tay10r/betterthannetpbm/archive/master.zip")
+FetchContent_Declare(better_than_netpbm URL "https://github.com/tay10r/BetterThanNetpbm/archive/refs/heads/main.zip")
 FetchContent_MakeAvailable(better_than_netpbm)
 ```
 
