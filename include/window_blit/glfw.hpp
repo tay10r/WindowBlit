@@ -8,7 +8,7 @@ namespace window_blit {
 class AppFactoryBase;
 
 int
-run_glfw_window(const AppFactoryBase& app_factory);
+run_glfw_window(AppFactoryBase&& app_factory);
 
 } // namespace window_blit
 

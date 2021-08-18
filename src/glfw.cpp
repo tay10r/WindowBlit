@@ -71,7 +71,7 @@ glfw_key_callback(GLFWwindow* window,
 } // namespace
 
 int
-run_glfw_window(const AppFactoryBase& app_factory)
+run_glfw_window(AppFactoryBase&& app_factory)
 {
   if (glfwInit() != GLFW_TRUE) {
     std::cerr << "Failed to initialize GLFW" << std::endl;

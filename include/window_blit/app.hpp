@@ -40,14 +40,14 @@ class AppFactoryBase
 public:
   virtual ~AppFactoryBase();
 
-  virtual App* create_app(GLFWwindow*) const = 0;
+  virtual App* create_app(GLFWwindow*) = 0;
 };
 
 template<typename DerivedApp>
 class AppFactory final : public AppFactoryBase
 {
 public:
-  App* create_app(GLFWwindow* window) const override
+  App* create_app(GLFWwindow* window) override
   {
     return new DerivedApp(window);
   }
