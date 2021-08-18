@@ -1,10 +1,10 @@
-BetterThanNetpbm
-================
+WindowBlit
+==========
 
-This project is for making it easy to debug path tracers. It was written so that
-there is something better to offer than rendering to a PPM file and then opening
-the image to view the result. More sophisticated path tracers will include a
-window to preview the result, but this adds a lot of boilerplate to the project.
+This project is for making it easy to debug path tracers or software renderers.
+It was written so that there is something better to offer than rendering to a PPM
+file and then opening the image to view the result.
+
 This library contains all the boilerplate needed to visualize the results of a
 path tracer at each iteration, while requiring very little boilerplate code.
 
