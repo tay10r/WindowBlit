@@ -1,4 +1,4 @@
-#include <btn/btn.h>
+#include <window_blit/window_blit.hpp>
 
 #include <glm/glm.hpp>
 
@@ -106,7 +106,7 @@ struct Material final
   glm::vec3 emission = glm::vec3(0, 0, 0);
 };
 
-class ExampleApp final : public btn::RtApp
+class ExampleApp final : public window_blit::AppBase
 {
 public:
   ExampleApp(GLFWwindow* window);
@@ -144,7 +144,7 @@ private:
 };
 
 ExampleApp::ExampleApp(GLFWwindow* window)
-  : RtApp(window)
+  : AppBase(window)
   , m_seed{ 1234, 42, 4321 }
   , m_rng(m_seed)
 {
@@ -252,7 +252,7 @@ ExampleApp::on_resize(int w, int h)
 
   m_sample_count = 0;
 
-  RtApp::on_resize(w, h);
+  AppBase::on_resize(w, h);
 }
 
 Ray
@@ -335,5 +335,5 @@ wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
 main()
 #endif
 {
-  return btn::run_glfw_window(btn::AppFactory<ExampleApp>());
+  return window_blit::run_glfw_window(window_blit::AppFactory<ExampleApp>());
 }

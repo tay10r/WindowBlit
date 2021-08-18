@@ -1,8 +1,8 @@
-#include "shader.h"
+#include "shader.hpp"
 
 #include <ostream>
 
-namespace btn {
+namespace window_blit {
 
 GLuint
 compile_shader(GLenum shader_type,
@@ -93,4 +93,4 @@ link_shader_program(GLuint vert_shader,
   return 0;
 }
 
-} // namespace btn
+} // namespace window_blit

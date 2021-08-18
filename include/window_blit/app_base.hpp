@@ -1,24 +1,24 @@
 #pragma once
 
-#ifndef BTN_RT_APP_H_INCLUDED
-#define BTN_RT_APP_H_INCLUDED
+#ifndef WINDOW_BLIT_RT_APP_HPP_INCLUDED
+#define WINDOW_BLIT_RT_APP_HPP_INCLUDED
 
-#include <btn/app.h>
+#include <window_blit/app.hpp>
 
 #include <glm/glm.hpp>
 
-namespace btn {
+namespace window_blit {
 
-class RtAppImpl;
+class AppBaseImpl;
 
-class RtApp : public App
+class AppBase : public App
 {
 public:
-  RtApp(GLFWwindow* window);
+  AppBase(GLFWwindow* window);
 
-  RtApp(const RtApp&) = delete;
+  AppBase(const AppBase&) = delete;
 
-  virtual ~RtApp();
+  virtual ~AppBase();
 
   virtual void render(float* rgb_buffer, int w, int h) = 0;
 
@@ -43,11 +43,11 @@ public:
   virtual void on_cursor_motion(double x, double y, double dx, double dy);
 
 private:
-  friend RtAppImpl;
+  friend AppBaseImpl;
 
-  RtAppImpl* m_impl = nullptr;
+  AppBaseImpl* m_impl = nullptr;
 };
 
-} // namespace btn
+} // namespace window_blit
 
-#endif // BTN_RT_APP_H_INCLUDED
+#endif // WINDOW_BLIT_RT_APP_HPP_INCLUDED

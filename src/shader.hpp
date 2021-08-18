@@ -5,7 +5,7 @@
 #include <iosfwd>
 #include <string>
 
-namespace btn {
+namespace window_blit {
 
 /// Attempts to compile a shader.
 ///
@@ -25,4 +25,4 @@ link_shader_program(GLuint vert_shader,
                     GLuint frag_shader,
                     std::ostream& errlog);
 
-} // namespace btn
+} // namespace window_blit

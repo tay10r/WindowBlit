@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.14.7)
 
-project(better_than_netpbm)
+project(window_blit)
 
-option(BTN_EXAMPLES "Whether or not to build the examples." OFF)
+option(WINDOWBLIT_EXAMPLES "Whether or not to build the examples." OFF)
 
 add_subdirectory(glad)
 
@@ -44,7 +44,7 @@ FetchContent_MakeAvailable(imgui)
 
 FetchContent_GetProperties(imgui)
 
-set(btn_imgui_sources
+set(windowblit_imgui_sources
   imconfig.h
   imgui.cpp
   imgui_demo.cpp
@@ -61,46 +61,46 @@ set(btn_imgui_sources
   backends/imgui_impl_opengl3.cpp
   backends/imgui_impl_opengl3.h)
 
-list(TRANSFORM btn_imgui_sources PREPEND "${imgui_SOURCE_DIR}/")
+list(TRANSFORM windowblit_imgui_sources PREPEND "${imgui_SOURCE_DIR}/")
 
-add_library(btn_imgui ${btn_imgui_sources})
+add_library(windowblit_imgui ${windowblit_imgui_sources})
 
-target_compile_definitions(btn_imgui
+target_compile_definitions(windowblit_imgui
   PRIVATE
     IMGUI_IMPL_OPENGL_LOADER_GLAD=1)
 
-target_include_directories(btn_imgui
+target_include_directories(windowblit_imgui
   PUBLIC
     "${imgui_SOURCE_DIR}"
     "${imgui_SOURCE_DIR}/backends")
 
-target_link_libraries(btn_imgui PUBLIC glad glfw)
+target_link_libraries(windowblit_imgui PUBLIC glad glfw)
 
 #################
 # Build Library #
 #################
 
-add_library(better_than_netpbm
-  include/btn/app.h
-  include/btn/glfw.h
-  include/btn/rt_app.h
+add_library(window_blit
+  include/window_blit/app.hpp
+  include/window_blit/app_base.hpp
+  include/window_blit/glfw.hpp
   src/app.cpp
+  src/app_base.cpp
   src/glfw.cpp
-  src/shader.h
+  src/shader.hpp
   src/shader.cpp
-  src/rt_app.cpp
   src/stb_image_write.h
   src/stb_image_write.c)
 
-target_include_directories(better_than_netpbm PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(window_blit PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
-target_link_libraries(better_than_netpbm PUBLIC glfw glad btn_imgui glm)
+target_link_libraries(window_blit PUBLIC glfw glad windowblit_imgui glm)
 
 ##################
 # Build Examples #
 ##################
 
-if(BTN_EXAMPLES)
+if(WINDOWBLIT_EXAMPLES)
 
   set(examples
     minimal
@@ -108,11 +108,11 @@ if(BTN_EXAMPLES)
 
   foreach(example ${examples})
 
-    set(target better_than_netpbm_example_${example})
+    set(target window_blit_example_${example})
 
     add_executable(${target} WIN32 examples/${example}/main.cpp)
 
-    target_link_libraries(${target} better_than_netpbm)
+    target_link_libraries(${target} window_blit)
 
     set_target_properties(${target}
       PROPERTIES
@@ -120,4 +120,4 @@ if(BTN_EXAMPLES)
 
   endforeach(example ${examples})
 
-endif(BTN_EXAMPLES)
+endif(WINDOWBLIT_EXAMPLES)

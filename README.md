@@ -11,12 +11,12 @@ path tracer at each iteration, while requiring very little boilerplate code.
 Here is an example:
 
 ```cpp
-#include <btn/btn.h>
+#include <window_blit/winodw_blit.hpp>
 
-class Example final : public btn::RtApp
+class Example final : public window_blit::AppBase
 {
 public:
-  using btn::RtApp::RtApp;
+  using window_blit::AppBase::AppBase;
 
   void render(float* rgb_buffer, int w, int h) override
   {
@@ -27,7 +27,7 @@ public:
 int
 main()
 {
-  return btn::run_glfw_window(btn::AppFactory<Example>());
+  return window_blit::run_glfw_window(window_blit::AppFactory<Example>());
 }
 ```
 
@@ -71,12 +71,12 @@ sufficient to get started, you will eventually want to overload other virtual
 functions in the class. Here's a more complete example.
 
 ```cxx
-#include <btn/btn.h>
+#include <window_blit/window_blit.hpp>
 
-class Example final : public btn::RtApp
+class Example final : public window_blit::AppBase
 {
 public:
-  using btn::RtApp::RtApp;
+  using window_blit::AppBase::AppBase;
 
   void render(float* rgb_buffer, int w, int h) override
   {
@@ -102,7 +102,7 @@ public:
 int
 main()
 {
-  return btn::run_glfw_window(btn::AppFactory<Example>());
+  return window_blit::run_glfw_window(window_blit::AppFactory<Example>());
 }
 ```
 
@@ -148,21 +148,21 @@ module.
 # Note that this requires CMake 3.14.7 and above. CMake 3.14.7 was released on
 # September 30th, 2019.
 include(FetchContent)
-FetchContent_Declare(better_than_netpbm URL "https://github.com/tay10r/BetterThanNetpbm/archive/refs/heads/main.zip")
-FetchContent_MakeAvailable(better_than_netpbm)
+FetchContent_Declare(window_blit URL "https://github.com/tay10r/WindowBlit/archive/refs/heads/main.zip")
+FetchContent_MakeAvailable(window_blit)
 ```
 
 You can also add it as a Git submodule and then just include it in your cmake
 build like this:
 
 ```cmake
-add_subdirectory(path/to/better_than_netpbm)
+add_subdirectory(path/to/WindowBlit)
 ```
 
 Once either of the two steps above have been done, just link to the library.
 
 ```cmake
-target_link_libraries(my_path_tracer PRIVATE better_than_netpbm)
+target_link_libraries(my_path_tracer PRIVATE WindowBlit)
 ```
 
 Note that with this library comes GLM. If you're starting a path tracer from

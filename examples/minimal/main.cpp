@@ -1,11 +1,11 @@
-#include <btn/btn.h>
+#include <window_blit/window_blit.hpp>
 
 namespace {
 
-class MinimalExample final : public btn::RtApp
+class MinimalExample final : public window_blit::AppBase
 {
 public:
-  using btn::RtApp::RtApp;
+  using window_blit::AppBase::AppBase;
 
   void render(float* rgb_buffer, int w, int h) override
   {
@@ -29,6 +29,6 @@ public:
 int
 main()
 {
-  return btn::run_glfw_window(btn::AppFactory<MinimalExample>());
-  ;
+  return window_blit::run_glfw_window(
+    window_blit::AppFactory<MinimalExample>());
 }

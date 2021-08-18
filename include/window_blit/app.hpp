@@ -1,13 +1,13 @@
 #pragma once
 
-#ifndef BTN_APP_H_INCLUDED
-#define BTN_APP_H_INCLUDED
+#ifndef WINDOW_BLIT_APP_HPP_INCLUDED
+#define WINDOW_BLIT_APP_HPP_INCLUDED
 
 #include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
 
-namespace btn {
+namespace window_blit {
 
 class App
 {
@@ -53,6 +53,6 @@ public:
   }
 };
 
-} // namespace btn
+} // namespace window_blit
 
-#endif // BTN_APP_H_INCLUDED
+#endif // WINDOW_BLIT_APP_HPP_INCLUDED

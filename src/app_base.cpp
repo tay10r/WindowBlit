@@ -1,6 +1,6 @@
-#include <btn/rt_app.h>
+#include <window_blit/app_base.hpp>
 
-#include "shader.h"
+#include "shader.hpp"
 
 #include "stb_image_write.h"
 
@@ -25,7 +25,7 @@
 #define M_PI 3.1415f
 #endif
 
-namespace btn {
+namespace window_blit {
 
 namespace {
 
@@ -172,10 +172,10 @@ private:
 
 } // namespace
 
-class RtAppImpl final
+class AppBaseImpl final
 {
 public:
-  RtAppImpl(GLFWwindow* window)
+  AppBaseImpl(GLFWwindow* window)
     : m_camera(new FirstPersonCamera())
   {
     setup_shader_program();
@@ -200,7 +200,7 @@ public:
     m_frame.resize(w, h);
   }
 
-  ~RtAppImpl()
+  ~AppBaseImpl()
   {
     glDeleteBuffers(1, &m_vertex_buffer);
 
@@ -209,7 +209,7 @@ public:
     glDeleteProgram(m_program);
   }
 
-  void on_frame(RtApp& rt_app)
+  void on_frame(AppBase& rt_app)
   {
     render_gui(rt_app);
 
@@ -245,7 +245,7 @@ public:
 
   bool frame_clicked() const noexcept { return m_frame_clicked; }
 
-  void on_cursor_motion(double x, double y, RtApp& app)
+  void on_cursor_motion(double x, double y, AppBase& app)
   {
     if (!m_frame_clicked)
       return;
@@ -300,7 +300,7 @@ public:
   }
 
 private:
-  void render_gui(RtApp& rt_app)
+  void render_gui(AppBase& rt_app)
   {
     ImGui::Begin("Control");
 
@@ -454,56 +454,56 @@ private:
   glm::vec2 m_last_frame_pos = glm::vec2(0, 0);
 };
 
-RtApp::RtApp(GLFWwindow* window)
+AppBase::AppBase(GLFWwindow* window)
   : App(window)
-  , m_impl(new RtAppImpl(window))
+  , m_impl(new AppBaseImpl(window))
 {}
 
-RtApp::~RtApp()
+AppBase::~AppBase()
 {
   delete m_impl;
 }
 
 void
-RtApp::on_frame()
+AppBase::on_frame()
 {
   m_impl->on_frame(*this);
 }
 
 void
-RtApp::on_key(int key, int scancode, int action, int mods)
+AppBase::on_key(int key, int scancode, int action, int mods)
 {
   m_impl->on_key(key, scancode, action, mods);
 }
 
 void
-RtApp::on_resize(int w, int h)
+AppBase::on_resize(int w, int h)
 {
   return m_impl->on_resize(w, h);
 }
 
 void
-RtApp::on_close()
+AppBase::on_close()
 {}
 
 void
-RtApp::on_camera_change()
+AppBase::on_camera_change()
 {}
 
 glm::vec3
-RtApp::get_camera_position() const
+AppBase::get_camera_position() const
 {
   return m_impl->get_camera_position();
 }
 
 glm::mat3
-RtApp::get_camera_rotation_transform() const
+AppBase::get_camera_rotation_transform() const
 {
   return m_impl->get_camera_rotation_transform();
 }
 
 void
-RtApp::on_cursor_motion(double x, double y)
+AppBase::on_cursor_motion(double x, double y)
 {
   if (!m_impl->frame_clicked())
     return;
@@ -518,15 +518,15 @@ RtApp::on_cursor_motion(double x, double y)
 }
 
 void
-RtApp::on_cursor_button(int button, int action, int mods)
+AppBase::on_cursor_button(int button, int action, int mods)
 {
   m_impl->on_cursor_button(button, action, mods);
 }
 
 void
-RtApp::on_cursor_motion(double x, double y, double dx, double dy)
+AppBase::on_cursor_motion(double x, double y, double dx, double dy)
 {
   m_impl->on_cursor_motion(x, y, dx, dy);
 }
 
-} // namespace btn
+} // namespace window_blit

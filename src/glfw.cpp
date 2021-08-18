@@ -1,6 +1,6 @@
-#include <btn/glfw.h>
+#include <window_blit/glfw.hpp>
 
-#include <btn/app.h>
+#include <window_blit/app.hpp>
 
 #include <glad/glad.h>
 
@@ -16,7 +16,7 @@
 
 #include <cstdlib>
 
-namespace btn {
+namespace window_blit {
 
 namespace {
 
@@ -177,4 +177,4 @@ run_glfw_window(const AppFactoryBase& app_factory)
   return EXIT_SUCCESS;
 }
 
-} // namespace btn
+} // namespace window_blit
