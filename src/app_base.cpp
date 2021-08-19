@@ -174,7 +174,8 @@ private:
 
 class AppBaseImpl final
 {
-public:
+  friend AppBase;
+
   AppBaseImpl(GLFWwindow* window)
     : m_camera(new FirstPersonCamera())
   {
@@ -209,18 +210,18 @@ public:
     glDeleteProgram(m_program);
   }
 
-  void on_frame(AppBase& rt_app)
+  void on_frame(AppBase& app)
   {
-    render_gui(rt_app);
+    app.render_imgui();
 
     if (m_camera->is_moving()) {
 
       m_camera->move();
 
-      rt_app.on_camera_change();
+      app.on_camera_change();
     }
 
-    rt_app.render(&m_frame.color[0], m_frame.w, m_frame.h);
+    app.render(&m_frame.color[0], m_frame.w, m_frame.h);
 
     glBindTexture(GL_TEXTURE_2D, m_texture);
 
@@ -300,21 +301,6 @@ public:
   }
 
 private:
-  void render_gui(AppBase& rt_app)
-  {
-    ImGui::Begin("Control");
-
-    ImGui::Text("FPS = %.1f", ImGui::GetIO().Framerate);
-
-    if (ImGui::Button("Save PNG"))
-      save_png();
-
-    if (ImGui::Button("Quit"))
-      glfwSetWindowShouldClose(rt_app.get_glfw_window(), true);
-
-    ImGui::End();
-  }
-
   bool setup_shader_program()
   {
     auto vert_shader =
@@ -527,6 +513,22 @@ void
 AppBase::on_cursor_motion(double x, double y, double dx, double dy)
 {
   m_impl->on_cursor_motion(x, y, dx, dy);
+}
+
+void
+AppBase::render_imgui()
+{
+  ImGui::Begin("Control");
+
+  ImGui::Text("FPS = %.1f", ImGui::GetIO().Framerate);
+
+  if (ImGui::Button("Save PNG"))
+    m_impl->save_png();
+
+  if (ImGui::Button("Quit"))
+    glfwSetWindowShouldClose(get_glfw_window(), true);
+
+  ImGui::End();
 }
 
 } // namespace window_blit

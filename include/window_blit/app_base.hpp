@@ -42,6 +42,8 @@ public:
 
   virtual void on_cursor_motion(double x, double y, double dx, double dy);
 
+  virtual void render_imgui();
+
 private:
   friend AppBaseImpl;
 
