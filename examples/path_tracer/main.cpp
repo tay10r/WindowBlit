@@ -106,6 +106,18 @@ struct Material final
   glm::vec3 emission = glm::vec3(0, 0, 0);
 };
 
+struct Pixel final
+{
+  glm::vec3 color;
+
+  std::minstd_rand rng;
+
+  Pixel(int seed = 3141)
+    : color(0, 0, 0)
+    , rng(seed)
+  {}
+};
+
 class ExampleApp final : public window_blit::AppBase
 {
 public:
@@ -118,23 +130,24 @@ public:
   void on_camera_change() override;
 
 private:
-  Ray generate_ray(glm::vec2 uv_min, glm::vec2 uv_max, float aspect);
+  void reset();
+
+  template<typename Rng>
+  Ray generate_ray(glm::vec2 uv_min, glm::vec2 uv_max, float aspect, Rng& rng);
 
   Hit intersect_scene(const Ray& ray) const;
 
-  glm::vec3 trace(const Ray& ray, int depth = 0);
+  template<typename Rng>
+  glm::vec3 trace(const Ray& ray, Rng& rng, int depth = 0);
 
   glm::vec3 on_miss(const Ray& ray) const;
 
-  glm::vec3 sample_unit_sphere();
+  template<typename Rng>
+  glm::vec3 sample_unit_sphere(Rng& rng);
 
   void create_scene();
 
-  std::seed_seq m_seed;
-
-  std::mt19937 m_rng;
-
-  std::vector<glm::vec3> m_accumulator;
+  std::vector<Pixel> m_accumulator;
 
   int m_sample_count = 0;
 
@@ -145,8 +158,6 @@ private:
 
 ExampleApp::ExampleApp(GLFWwindow* window)
   : AppBase(window)
-  , m_seed{ 1234, 42, 4321 }
-  , m_rng(m_seed)
 {
   int w = 0;
   int h = 0;
@@ -154,15 +165,26 @@ ExampleApp::ExampleApp(GLFWwindow* window)
 
   m_accumulator.resize(w * h);
 
+  reset();
+
   create_scene();
+}
+
+void
+ExampleApp::reset()
+{
+#pragma omp parallel for
+
+  for (int i = 0; i < int(m_accumulator.size()); i++)
+    m_accumulator[i] = Pixel(i);
+
+  m_sample_count = 0;
 }
 
 void
 ExampleApp::on_camera_change()
 {
-  std::fill(m_accumulator.begin(), m_accumulator.end(), glm::vec3(0, 0, 0));
-
-  m_sample_count = 0;
+  reset();
 }
 
 void
@@ -223,6 +245,8 @@ ExampleApp::render(float* rgb_buffer, int w, int h)
 
   float sample_weight = 1.0f / (m_sample_count + 1.0f);
 
+#pragma omp parallel for
+
   for (int i = 0; i < (w * h); i++) {
 
     int x = i % w;
@@ -231,13 +255,13 @@ ExampleApp::render(float* rgb_buffer, int w, int h)
     glm::vec2 uv_min((x + 0.0f) * rcp_w, (y + 0.0f) * rcp_h);
     glm::vec2 uv_max((x + 1.0f) * rcp_w, (y + 1.0f) * rcp_h);
 
-    auto ray = generate_ray(uv_min, uv_max, aspect);
+    auto ray = generate_ray(uv_min, uv_max, aspect, m_accumulator[i].rng);
 
-    m_accumulator[i] += trace(ray);
+    m_accumulator[i].color += trace(ray, m_accumulator[i].rng);
 
-    rgb_buffer[(i * 3) + 0] = m_accumulator[i].x * sample_weight;
-    rgb_buffer[(i * 3) + 1] = m_accumulator[i].y * sample_weight;
-    rgb_buffer[(i * 3) + 2] = m_accumulator[i].z * sample_weight;
+    rgb_buffer[(i * 3) + 0] = m_accumulator[i].color.x * sample_weight;
+    rgb_buffer[(i * 3) + 1] = m_accumulator[i].color.y * sample_weight;
+    rgb_buffer[(i * 3) + 2] = m_accumulator[i].color.z * sample_weight;
   }
 
   m_sample_count++;
@@ -248,15 +272,17 @@ ExampleApp::on_resize(int w, int h)
 {
   m_accumulator.resize(w * h);
 
-  std::fill(m_accumulator.begin(), m_accumulator.end(), glm::vec3(0, 0, 0));
-
-  m_sample_count = 0;
+  reset();
 
   AppBase::on_resize(w, h);
 }
 
+template<typename Rng>
 Ray
-ExampleApp::generate_ray(glm::vec2 uv_min, glm::vec2 uv_max, float aspect)
+ExampleApp::generate_ray(glm::vec2 uv_min,
+                         glm::vec2 uv_max,
+                         float aspect,
+                         Rng& rng)
 {
   std::uniform_real_distribution<float> x_dist(uv_min.x, uv_max.x);
   std::uniform_real_distribution<float> y_dist(uv_min.y, uv_max.y);
@@ -264,8 +290,8 @@ ExampleApp::generate_ray(glm::vec2 uv_min, glm::vec2 uv_max, float aspect)
   float fov_x = 0.5 * aspect;
   float fov_y = 0.5;
 
-  float u = x_dist(m_rng);
-  float v = y_dist(m_rng);
+  float u = x_dist(rng);
+  float v = y_dist(rng);
 
   glm::vec3 org = get_camera_position();
 
@@ -275,8 +301,9 @@ ExampleApp::generate_ray(glm::vec2 uv_min, glm::vec2 uv_max, float aspect)
   return Ray{ org, get_camera_rotation_transform() * glm::normalize(dir) };
 }
 
+template<typename Rng>
 glm::vec3
-ExampleApp::trace(const Ray& ray, int depth)
+ExampleApp::trace(const Ray& ray, Rng& rng, int depth)
 {
   if (depth >= 3)
     return glm::vec3(0, 0, 0);
@@ -287,23 +314,26 @@ ExampleApp::trace(const Ray& ray, int depth)
     return on_miss(ray);
 
   auto refl_pos = hit.pos;
-  auto refl_dir = glm::normalize(hit.nrm + sample_unit_sphere());
+
+  auto refl_dir = glm::normalize(hit.nrm + sample_unit_sphere(rng));
 
   const auto& material = m_materials[hit.material];
 
-  auto diffuse = trace(Ray{ refl_pos, refl_dir }, depth + 1) * material.diffuse;
+  auto diffuse =
+    trace(Ray{ refl_pos, refl_dir }, rng, depth + 1) * material.diffuse;
 
   return diffuse + material.emission;
 }
 
+template<typename Rng>
 glm::vec3
-ExampleApp::sample_unit_sphere()
+ExampleApp::sample_unit_sphere(Rng& rng)
 {
   std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
 
   for (;;) {
 
-    glm::vec3 d(dist(m_rng), dist(m_rng), dist(m_rng));
+    glm::vec3 d(dist(rng), dist(rng), dist(rng));
 
     if (glm::dot(d, d) <= 1)
       return glm::normalize(d);

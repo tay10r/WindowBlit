@@ -102,6 +102,8 @@ target_link_libraries(window_blit PUBLIC glfw glad windowblit_imgui glm)
 
 if(WINDOWBLIT_EXAMPLES)
 
+  find_package(OpenMP)
+
   set(examples
     minimal
     path_tracer)
@@ -112,7 +114,11 @@ if(WINDOWBLIT_EXAMPLES)
 
     add_executable(${target} WIN32 examples/${example}/main.cpp)
 
-    target_link_libraries(${target} window_blit)
+    target_link_libraries(${target} PRIVATE window_blit)
+
+    if(OpenMP_FOUND)
+      target_link_libraries(${target} PRIVATE OpenMP::OpenMP_CXX)
+    endif(OpenMP_FOUND)
 
     set_target_properties(${target}
       PROPERTIES
