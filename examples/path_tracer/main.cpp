@@ -173,10 +173,12 @@ ExampleApp::ExampleApp(GLFWwindow* window)
 void
 ExampleApp::reset()
 {
-#pragma omp parallel for
+  std::seed_seq seed{ int(m_accumulator.size()), 1234 };
+
+  std::mt19937 seed_rng(seed);
 
   for (int i = 0; i < int(m_accumulator.size()); i++)
-    m_accumulator[i] = Pixel(i);
+    m_accumulator[i] = Pixel(seed_rng());
 
   m_sample_count = 0;
 }
