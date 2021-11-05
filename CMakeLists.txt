@@ -4,6 +4,8 @@ project(window_blit)
 
 option(WINDOWBLIT_EXAMPLES "Whether or not to build the examples." OFF)
 
+option(WINDOWBLIT_FETCH_DEPS "Wether or not to manually download the examples." OFF)
+
 add_subdirectory(glad)
 
 include(FetchContent)
@@ -12,25 +14,42 @@ include(FetchContent)
 # Setup GLM #
 #############
 
-FetchContent_Declare(glm
-  URL "https://github.com/g-truc/glm/archive/refs/tags/0.9.9.8.zip"
-  URL_HASH "SHA256=4605259c22feadf35388c027f07b345ad3aa3b12631a5a316347f7566c6f1839")
+if(WINDOWBLIT_FETCH_DEPS)
 
-FetchContent_MakeAvailable(glm)
+  FetchContent_Declare(glm
+    URL "https://github.com/g-truc/glm/archive/refs/tags/0.9.9.8.zip"
+    URL_HASH "SHA256=4605259c22feadf35388c027f07b345ad3aa3b12631a5a316347f7566c6f1839")
+
+  FetchContent_MakeAvailable(glm)
+
+else(WINDOWBLIT_FETCH_DEPS)
+
+  find_package(glm REQUIRED)
+
+endif(WINDOWBLIT_FETCH_DEPS)
 
 ##############
 # Setup GLFW #
 ##############
 
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "")
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "")
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "")
+if(WINDOWBLIT_FETCH_DEPS)
 
-FetchContent_Declare(glfw
-  URL "https://github.com/glfw/glfw/archive/refs/tags/3.3.4.zip"
-  URL_HASH "SHA256=19a1048439a35e49f9b48fbe2e42787cfabae70df80ffd096b3b553bbd8a09f7")
+  set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "")
+  set(GLFW_BUILD_TESTS OFF CACHE BOOL "")
+  set(GLFW_BUILD_DOCS OFF CACHE BOOL "")
 
-FetchContent_MakeAvailable(glfw)
+  FetchContent_Declare(glfw
+    URL "https://github.com/glfw/glfw/archive/refs/tags/3.3.4.zip"
+    URL_HASH "SHA256=19a1048439a35e49f9b48fbe2e42787cfabae70df80ffd096b3b553bbd8a09f7")
+
+  FetchContent_MakeAvailable(glfw)
+
+else(WINDOWBLIT_FETCH_DEPS)
+
+  find_package(glfw3 REQUIRED)
+
+endif(WINDOWBLIT_FETCH_DEPS)
+
 
 ###############
 # Setup ImGui #
@@ -94,7 +113,13 @@ add_library(window_blit
 
 target_include_directories(window_blit PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
-target_link_libraries(window_blit PUBLIC glfw glad windowblit_imgui glm)
+target_link_libraries(window_blit PUBLIC glfw glad windowblit_imgui)
+
+if(TARGET glm)
+  target_link_libraries(window_blit PUBLIC glm)
+elseif(TARGET glm::glm)
+  target_link_libraries(window_blit PUBLIC glm::glm)
+endif(TARGET glm)
 
 ##################
 # Build Examples #
