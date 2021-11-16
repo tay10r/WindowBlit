@@ -6,9 +6,11 @@
 
 #include <GLFW/glfw3.h>
 
+#ifndef WINDOWBLIT_DISABLE_IMGUI
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#endif
 
 #include <iostream>
 #include <memory>
@@ -102,6 +104,7 @@ run_glfw_window(AppFactoryBase&& app_factory)
 
   glViewport(0, 0, display_w, display_h);
 
+#ifndef WINDOWBLIT_DISABLE_IMGUI
   IMGUI_CHECKVERSION();
 
   ImGui::CreateContext();
@@ -110,8 +113,8 @@ run_glfw_window(AppFactoryBase&& app_factory)
 
   ImGui_ImplGlfw_InitForOpenGL(window, true);
 
-  ImGui_ImplOpenGL3_Init();
-
+  ImGui_ImplOpenGL3_Init("#version 120");
+#endif
   {
     // Scoped so that the smart pointer is destroyed before GLFW window.
 
@@ -138,14 +141,17 @@ run_glfw_window(AppFactoryBase&& app_factory)
 
       glfwPollEvents();
 
+#ifndef WINDOWBLIT_DISABLE_IMGUI
       ImGui_ImplOpenGL3_NewFrame();
 
       ImGui_ImplGlfw_NewFrame();
 
       ImGui::NewFrame();
+#endif
 
       app->on_frame();
 
+#ifndef WINDOWBLIT_DISABLE_IMGUI
       ImGui::Render();
 
       int display_w = 0, display_h = 0;
@@ -155,6 +161,7 @@ run_glfw_window(AppFactoryBase&& app_factory)
       glViewport(0, 0, display_w, display_h);
 
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#endif
 
       glfwMakeContextCurrent(window);
 
@@ -164,11 +171,13 @@ run_glfw_window(AppFactoryBase&& app_factory)
     app->on_close();
   }
 
+#ifndef WINDOWBLIT_DISABLE_IMGUI
   ImGui_ImplOpenGL3_Shutdown();
 
   ImGui_ImplGlfw_Shutdown();
 
   ImGui::DestroyContext();
+#endif
 
   glfwDestroyWindow(window);
 

@@ -4,7 +4,9 @@ project(window_blit)
 
 option(WINDOWBLIT_EXAMPLES "Whether or not to build the examples." OFF)
 
-option(WINDOWBLIT_FETCH_DEPS "Wether or not to manually download the examples." OFF)
+option(WINDOWBLIT_FETCH_DEPS "Whether or not to manually download the examples." OFF)
+
+option(WINDOWBLIT_DISABLE_IMGUI "Whether or not to disable ImGui." OFF)
 
 add_subdirectory(glad)
 
@@ -55,45 +57,49 @@ endif(WINDOWBLIT_FETCH_DEPS)
 # Setup ImGui #
 ###############
 
-FetchContent_Declare(imgui
-  URL "https://github.com/ocornut/imgui/archive/refs/tags/v1.83.zip"
-  URL_HASH "SHA256=56db0e98f4b828396391366b694049d38478562b98b8e29f6cef3b56cd8029d5")
+if(NOT WINDOWBLIT_DISABLE_IMGUI)
 
-FetchContent_MakeAvailable(imgui)
+  FetchContent_Declare(imgui
+    URL "https://github.com/ocornut/imgui/archive/refs/tags/v1.83.zip"
+    URL_HASH "SHA256=56db0e98f4b828396391366b694049d38478562b98b8e29f6cef3b56cd8029d5")
 
-FetchContent_GetProperties(imgui)
+  FetchContent_MakeAvailable(imgui)
 
-set(windowblit_imgui_sources
-  imconfig.h
-  imgui.cpp
-  imgui_demo.cpp
-  imgui_draw.cpp
-  imgui.h
-  imgui_internal.h
-  imgui_tables.cpp
-  imgui_widgets.cpp
-  imstb_rectpack.h
-  imstb_textedit.h
-  imstb_truetype.h
-  backends/imgui_impl_glfw.cpp
-  backends/imgui_impl_glfw.h
-  backends/imgui_impl_opengl3.cpp
-  backends/imgui_impl_opengl3.h)
+  FetchContent_GetProperties(imgui)
 
-list(TRANSFORM windowblit_imgui_sources PREPEND "${imgui_SOURCE_DIR}/")
+  set(windowblit_imgui_sources
+    imconfig.h
+    imgui.cpp
+    imgui_demo.cpp
+    imgui_draw.cpp
+    imgui.h
+    imgui_internal.h
+    imgui_tables.cpp
+    imgui_widgets.cpp
+    imstb_rectpack.h
+    imstb_textedit.h
+    imstb_truetype.h
+    backends/imgui_impl_glfw.cpp
+    backends/imgui_impl_glfw.h
+    backends/imgui_impl_opengl3.cpp
+    backends/imgui_impl_opengl3.h)
 
-add_library(windowblit_imgui ${windowblit_imgui_sources})
+  list(TRANSFORM windowblit_imgui_sources PREPEND "${imgui_SOURCE_DIR}/")
 
-target_compile_definitions(windowblit_imgui
-  PRIVATE
-    IMGUI_IMPL_OPENGL_LOADER_GLAD=1)
+  add_library(windowblit_imgui ${windowblit_imgui_sources})
 
-target_include_directories(windowblit_imgui
-  PUBLIC
-    "${imgui_SOURCE_DIR}"
-    "${imgui_SOURCE_DIR}/backends")
+  target_compile_definitions(windowblit_imgui
+    PRIVATE
+      IMGUI_IMPL_OPENGL_LOADER_GLAD=1)
 
-target_link_libraries(windowblit_imgui PUBLIC glad glfw)
+  target_include_directories(windowblit_imgui
+    PUBLIC
+      "${imgui_SOURCE_DIR}"
+      "${imgui_SOURCE_DIR}/backends")
+
+  target_link_libraries(windowblit_imgui PUBLIC glad glfw)
+
+endif(NOT WINDOWBLIT_DISABLE_IMGUI)
 
 #################
 # Build Library #
@@ -111,9 +117,21 @@ add_library(window_blit
   src/stb_image_write.h
   src/stb_image_write.c)
 
+if(WINDOWBLIT_DISABLE_IMGUI)
+  target_compile_definitions(window_blit PRIVATE WINDOWBLIT_DISABLE_IMGUI=1)
+endif(WINDOWBLIT_DISABLE_IMGUI)
+
 target_include_directories(window_blit PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
-target_link_libraries(window_blit PUBLIC glfw glad windowblit_imgui)
+target_link_libraries(window_blit PUBLIC glfw glad)
+
+if(NOT WINDOWBLIT_DISABLE_IMGUI)
+  target_link_libraries(window_blit PUBLIC windowblit_imgui)
+endif(NOT WINDOWBLIT_DISABLE_IMGUI)
+
+if(UNIX)
+  target_link_libraries(window_blit PUBLIC dl)
+endif(UNIX)
 
 if(TARGET glm)
   target_link_libraries(window_blit PUBLIC glm)

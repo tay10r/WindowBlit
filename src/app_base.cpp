@@ -5,9 +5,14 @@
 #include "stb_image_write.h"
 
 #include <glm/glm.hpp>
+
+#define GLM_ENABLE_EXPERIMENTAL
+
 #include <glm/gtx/transform.hpp>
 
+#ifndef WINDOWBLIT_DISABLE_IMGUI
 #include <imgui.h>
+#endif
 
 #include <fstream>
 #include <iomanip>
@@ -212,7 +217,7 @@ class AppBaseImpl final
 
   void on_frame(AppBase& app)
   {
-    app.render_imgui();
+    //app.render_imgui();
 
     if (m_camera->is_moving()) {
 
@@ -274,8 +279,10 @@ class AppBaseImpl final
 
   void on_cursor_button(int button, int action, int /* mods */)
   {
+#ifndef WINDOWBLIT_DISABLE_IMGUI
     if (ImGui::GetIO().WantCaptureMouse)
       return;
+#endif
 
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
 
@@ -518,6 +525,7 @@ AppBase::on_cursor_motion(double x, double y, double dx, double dy)
 void
 AppBase::render_imgui()
 {
+#ifndef WINDOWBLIT_DISABLE_IMGUI
   ImGui::Begin("Control");
 
   ImGui::Text("FPS = %.1f", ImGui::GetIO().Framerate);
@@ -529,6 +537,7 @@ AppBase::render_imgui()
     glfwSetWindowShouldClose(get_glfw_window(), true);
 
   ImGui::End();
+#endif
 }
 
 } // namespace window_blit
