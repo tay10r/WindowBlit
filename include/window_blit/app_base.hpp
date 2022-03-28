@@ -20,7 +20,7 @@ public:
 
   virtual ~AppBase();
 
-  virtual void render(float* rgb_buffer, int w, int h) = 0;
+  virtual void render(GLuint texture_id, int w, int h) = 0;
 
   virtual void on_frame() override;
 
@@ -43,6 +43,32 @@ public:
   virtual void on_cursor_motion(double x, double y, double dx, double dy);
 
   virtual void render_imgui();
+
+  /// @brief Used to indicate to the shader how many samples have been measured
+  /// by the path tracer.
+  ///
+  /// @param sample_weight Each color channel in the texture is multiplied by
+  /// this value before being assigned to a fragment.
+  ///                      The multiplication happens before any tone mapping or
+  ///                      sRGB conversion.
+  virtual void set_sample_weight(float sample_weight);
+
+  /// @brief Sets whether or not tone mapping is applied.
+  ///
+  /// @param tone_mapping_mask The level at which to apply tone mapping to the fragment.
+  virtual void set_tone_mapping(float tone_mapping_mask);
+
+  /// @brief Sets whether or not a conversion from linear RGB to sRGB occurs.
+  ///
+  /// @param srgb_mask The level at which to use the sRGB conversion in the final image.
+  virtual void set_srgb(float srgb_mask);
+
+protected:
+  void load_rgb(const float* rgb, int w, int h, GLuint texture_id);
+
+  void load_rgb(const glm::vec3* rgb, int w, int h, GLuint texture_id);
+
+  void load_rgb(const unsigned char* rgb, int w, int h, GLuint texture_id);
 
 private:
   friend AppBaseImpl;

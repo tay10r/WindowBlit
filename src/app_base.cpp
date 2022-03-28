@@ -57,30 +57,58 @@ uniform sampler2D texture;
 
 varying vec2 g_tex_coord;
 
+uniform float g_sample_weight;
+
+uniform float g_tone_mapping;
+
+uniform float g_srgb;
+
+float hable_tone_map(float x)
+{
+  float A = 0.15;
+  float B = 0.50;
+  float C = 0.10;
+  float D = 0.20;
+  float E = 0.02;
+  float F = 0.30;
+
+  return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
+}
+
+vec3 apply_tone_map(vec3 color)
+{
+  float sig = max(color.r, max(color.g, color.b));
+  float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+  float coeff = max(sig - 0.18, 1e-6) / max(sig, 1e-6);
+
+  coeff = pow(coeff, 20.0);
+
+  color = mix(color, vec3(luma), coeff);
+
+  sig = mix(sig, luma, coeff);
+
+  return color * vec3(hable_tone_map(sig) / sig);
+}
+
+vec3 to_srgb(vec3 color)
+{
+    bvec3 cutoff = lessThan(color, vec3(0.0031308));
+    vec3 higher = vec3(1.055)*pow(color, vec3(1.0/2.4)) - vec3(0.055);
+    vec3 lower = color * vec3(12.92);
+    return mix(higher, lower, vec3(cutoff.r, cutoff.g, cutoff.b));
+}
+
 void main()
 {
-  gl_FragColor = texture2D(texture, g_tex_coord);
+  vec3 hdr_color = texture2D(texture, g_tex_coord).rgb * g_sample_weight;
+
+  vec3 ldr_color = mix(hdr_color, apply_tone_map(hdr_color), g_tone_mapping);
+
+  vec3 color = mix(ldr_color, to_srgb(ldr_color), g_srgb);
+
+  gl_FragColor = vec4(ldr_color, 1.0);
 }
 )";
-
-struct Frame final
-{
-  std::vector<float> color;
-  int w = 0;
-  int h = 0;
-
-  void resize(int ww, int hh)
-  {
-    w = 0;
-    h = 0;
-    color.clear();
-
-    color.resize(ww * hh * 3);
-
-    w = ww;
-    h = hh;
-  }
-};
 
 class Camera
 {
@@ -106,10 +134,7 @@ public:
 class FirstPersonCamera : public Camera
 {
 public:
-  bool is_moving() const override
-  {
-    return m_up_speed || m_left_speed || m_down_speed || m_right_speed;
-  }
+  bool is_moving() const override { return m_up_speed || m_left_speed || m_down_speed || m_right_speed; }
 
   void move() override
   {
@@ -153,8 +178,7 @@ public:
 
   glm::mat3 get_rotation_transform() const override
   {
-    return glm::rotate(m_angle_y, glm::vec3(0, 1, 0)) *
-           glm::rotate(m_angle_x, glm::vec3(1, 0, 0));
+    return glm::rotate(m_angle_y, glm::vec3(0, 1, 0)) * glm::rotate(m_angle_x, glm::vec3(1, 0, 0));
   }
 
 private:
@@ -193,17 +217,27 @@ class AppBaseImpl final
     glUseProgram(m_program);
 
     m_pos_attr_location = glGetAttribLocation(m_program, "g_pos");
+    assert(m_pos_attr_location >= 0);
+
+    m_sample_weight_uniform_location = glGetUniformLocation(m_program, "g_sample_weight");
+    assert(m_sample_weight_uniform_location >= 0);
+    glUniform1f(m_sample_weight_uniform_location, 1.0f);
+
+    m_tone_mapping_location = glGetUniformLocation(m_program, "g_tone_mapping");
+    assert(m_tone_mapping_location >= 0);
+    glUniform1f(m_tone_mapping_location, 1.0f);
+
+    m_srgb_location = glGetUniformLocation(m_program, "g_srgb");
+    assert(m_srgb_location >= 0);
+    glUniform1f(m_srgb_location, 1.0f);
 
     glEnableVertexAttribArray(m_pos_attr_location);
 
-    glVertexAttribPointer(
-      m_pos_attr_location, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
+    glVertexAttribPointer(m_pos_attr_location, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
 
     int w = 0;
     int h = 0;
     glfwGetWindowSize(window, &w, &h);
-
-    m_frame.resize(w, h);
   }
 
   ~AppBaseImpl()
@@ -217,6 +251,8 @@ class AppBaseImpl final
 
   void on_frame(AppBase& app)
   {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     app.render_imgui();
 
     if (m_camera->is_moving()) {
@@ -226,23 +262,21 @@ class AppBaseImpl final
       app.on_camera_change();
     }
 
-    app.render(&m_frame.color[0], m_frame.w, m_frame.h);
-
     glBindTexture(GL_TEXTURE_2D, m_texture);
 
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGB,
-                 m_frame.w,
-                 m_frame.h,
-                 0,
-                 GL_RGB,
-                 GL_FLOAT,
-                 &m_frame.color[0]);
+    int w = 0;
+    int h = 0;
+    glfwGetWindowSize(app.get_glfw_window(), &w, &h);
+
+    app.render(m_texture, w, h);
 
     glUseProgram(m_program);
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    std::cout << m_sample_weight << std::endl;
+
+    glUniform1f(m_sample_weight_uniform_location, m_sample_weight);
+
+    glUniform1f(m_tone_mapping_location, m_tone_mapping);
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   }
@@ -293,31 +327,23 @@ class AppBaseImpl final
     }
   }
 
-  void on_key(int key, int /* scancode */, int action, int /* mods */)
-  {
-    m_camera->handle_key(key, action);
-  }
+  void on_key(int key, int /* scancode */, int action, int /* mods */) { m_camera->handle_key(key, action); }
 
-  void on_resize(int w, int h) { m_frame.resize(w, h); }
+  void on_resize(int /* w */, int /* h */) {}
 
   glm::vec3 get_camera_position() const { return m_camera->get_position(); }
 
-  glm::mat3 get_camera_rotation_transform() const
-  {
-    return m_camera->get_rotation_transform();
-  }
+  glm::mat3 get_camera_rotation_transform() const { return m_camera->get_rotation_transform(); }
 
 private:
   bool setup_shader_program()
   {
-    auto vert_shader =
-      compile_shader(GL_VERTEX_SHADER, g_vert_shader, std::cerr);
+    auto vert_shader = compile_shader(GL_VERTEX_SHADER, g_vert_shader, std::cerr);
 
     if (!vert_shader)
       return false;
 
-    auto frag_shader =
-      compile_shader(GL_FRAGMENT_SHADER, g_frag_shader, std::cerr);
+    auto frag_shader = compile_shader(GL_FRAGMENT_SHADER, g_frag_shader, std::cerr);
 
     if (!frag_shader) {
       glDeleteShader(vert_shader);
@@ -373,32 +399,7 @@ private:
     };
     // clang-format on
 
-    glTexImage2D(
-      GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_FLOAT, initColorBuf);
-  }
-
-  bool save_png() const
-  {
-    auto path = get_png_path();
-
-    if (path.empty())
-      return false;
-
-    return save_png(path.c_str());
-  }
-
-  bool save_png(const char* path) const
-  {
-    using byte = unsigned char;
-
-    std::vector<byte> data(m_frame.w * m_frame.h * 3);
-
-    for (int i = 0; i < data.size(); i++)
-      data[i] = std::max(std::min(m_frame.color[i] * 255.0f, 255.0f), 0.0f);
-
-    int pitch = m_frame.w * 3;
-
-    return stbi_write_png(path, m_frame.w, m_frame.h, 3, &data[0], pitch);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_FLOAT, initColorBuf);
   }
 
   static std::string get_png_path()
@@ -434,9 +435,19 @@ private:
 
   GLuint m_program = 0;
 
-  GLint m_pos_attr_location = 0;
+  GLint m_pos_attr_location = -1;
 
-  Frame m_frame;
+  GLint m_sample_weight_uniform_location = -1;
+
+  float m_sample_weight = 1;
+
+  GLint m_tone_mapping_location = -1;
+
+  float m_tone_mapping = 1.0f;
+
+  GLint m_srgb_location = -1;
+
+  float m_srgb = 1;
 
   std::unique_ptr<Camera> m_camera;
 
@@ -530,14 +541,49 @@ AppBase::render_imgui()
 
   ImGui::Text("FPS = %.1f", ImGui::GetIO().Framerate);
 
-  if (ImGui::Button("Save PNG"))
-    m_impl->save_png();
-
   if (ImGui::Button("Quit"))
     glfwSetWindowShouldClose(get_glfw_window(), true);
 
   ImGui::End();
 #endif
+}
+
+void
+AppBase::set_sample_weight(float sample_weight)
+{
+  m_impl->m_sample_weight = sample_weight;
+}
+
+void
+AppBase::set_tone_mapping(float tone_mapping)
+{
+  m_impl->m_tone_mapping = tone_mapping;
+}
+
+void
+AppBase::set_srgb(float srgb_mask)
+{
+  m_impl->m_srgb = srgb_mask;
+}
+
+void
+AppBase::load_rgb(const float* rgb, int w, int h, GLuint texture_id)
+{
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, w, h, 0, GL_RGB, GL_FLOAT, rgb);
+}
+
+void
+AppBase::load_rgb(const glm::vec3* rgb, int w, int h, GLuint texture_id)
+{
+  static_assert(sizeof(glm::vec3) == (sizeof(float) * 3));
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, w, h, 0, GL_RGB, GL_FLOAT, rgb);
+}
+
+void
+AppBase::load_rgb(const unsigned char* rgb, int w, int h, GLuint texture_id)
+{
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, rgb);
 }
 
 } // namespace window_blit

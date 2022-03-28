@@ -1,5 +1,7 @@
 #include <window_blit/window_blit.hpp>
 
+#include <vector>
+
 namespace {
 
 class MinimalExample final : public window_blit::AppBase
@@ -7,8 +9,10 @@ class MinimalExample final : public window_blit::AppBase
 public:
   using window_blit::AppBase::AppBase;
 
-  void render(float* rgb_buffer, int w, int h) override
+  void render(GLuint texture_id, int w, int h) override
   {
+    std::vector<float> rgb(w * h * 3);
+
     for (int i = 0; i < (w * h); i++) {
 
       int x = i % w;
@@ -17,10 +21,12 @@ public:
       float u = (x + 0.5f) / w;
       float v = (y + 0.5f) / h;
 
-      rgb_buffer[(i * 3) + 0] = u;
-      rgb_buffer[(i * 3) + 1] = v;
-      rgb_buffer[(i * 3) + 2] = 1;
+      rgb[(i * 3) + 0] = u;
+      rgb[(i * 3) + 1] = v;
+      rgb[(i * 3) + 2] = 1;
     }
+
+    load_rgb(&rgb[0], w, h, texture_id);
   }
 };
 

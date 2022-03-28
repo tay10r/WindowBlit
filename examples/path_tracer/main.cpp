@@ -39,7 +39,7 @@ struct Hit final
 
 struct Sphere final
 {
-  glm::vec3 center = glm::vec3(0, 0, 0);
+  glm::vec3 center{ 0, 0, 0 };
 
   float radius = 1;
 
@@ -50,10 +50,7 @@ struct SphereHit final
 {
   float distance = std::numeric_limits<float>::infinity();
 
-  operator bool() const noexcept
-  {
-    return distance != std::numeric_limits<float>::infinity();
-  }
+  operator bool() const noexcept { return distance != std::numeric_limits<float>::infinity(); }
 };
 
 SphereHit
@@ -62,24 +59,24 @@ intersect(const Ray& ray, const Sphere& sphere)
   using namespace glm;
   using namespace std;
 
-  auto oc = ray.org - sphere.center;
+  const auto oc = ray.org - sphere.center;
 
-  auto a = dot(ray.dir, ray.dir);
-  auto b = dot(oc, ray.dir);
-  auto c = dot(oc, oc) - (sphere.radius * sphere.radius);
-  auto disc = (b * b) - (a * c);
+  const auto a = dot(ray.dir, ray.dir);
+  const auto b = dot(oc, ray.dir);
+  const auto c = dot(oc, oc) - (sphere.radius * sphere.radius);
+  const auto disc = (b * b) - (a * c);
 
   if (disc < 0)
     return SphereHit{};
 
-  auto discRoot = sqrt(disc);
+  const auto discRoot = sqrt(disc);
 
-  auto x0 = (-b - discRoot) / a;
+  const auto x0 = (-b - discRoot) / a;
 
   if ((x0 >= 0) && (x0 < ray.t_far))
     return SphereHit{ x0 };
 
-  auto x1 = (-b + discRoot) / a;
+  const auto x1 = (-b + discRoot) / a;
 
   if ((x1 >= 0) && (x1 < ray.t_far))
     return SphereHit{ x1 };
@@ -88,14 +85,11 @@ intersect(const Ray& ray, const Sphere& sphere)
 }
 
 Hit
-to_hit(const Ray& ray,
-       const Sphere& sphere,
-       const SphereHit& sphere_hit,
-       int primitive)
+to_hit(const Ray& ray, const Sphere& sphere, const SphereHit& sphere_hit, int primitive)
 {
   const float bias = 0.001f;
-  auto p = ray.org + (ray.dir * (sphere_hit.distance - bias));
-  auto n = (p - sphere.center) / sphere.radius;
+  const auto p = ray.org + (ray.dir * (sphere_hit.distance - bias));
+  const auto n = (p - sphere.center) / sphere.radius;
   return Hit{ primitive, sphere.material, p, n };
 }
 
@@ -106,24 +100,12 @@ struct Material final
   glm::vec3 emission = glm::vec3(0, 0, 0);
 };
 
-struct Pixel final
-{
-  glm::vec3 color;
-
-  std::minstd_rand rng;
-
-  Pixel(int seed = 3141)
-    : color(0, 0, 0)
-    , rng(seed)
-  {}
-};
-
 class ExampleApp final : public window_blit::AppBase
 {
 public:
   ExampleApp(GLFWwindow* window);
 
-  void render(float* rgb_buffer, int w, int h) override;
+  void render(GLuint texture_id, int w, int h) override;
 
   void on_resize(int w, int h) override;
 
@@ -133,21 +115,25 @@ private:
   void reset();
 
   template<typename Rng>
-  Ray generate_ray(glm::vec2 uv_min, glm::vec2 uv_max, float aspect, Rng& rng);
+  auto generate_ray(glm::vec2 uv_min, glm::vec2 uv_max, float aspect, Rng& rng) -> Ray;
 
-  Hit intersect_scene(const Ray& ray) const;
-
-  template<typename Rng>
-  glm::vec3 trace(const Ray& ray, Rng& rng, int depth = 0);
-
-  glm::vec3 on_miss(const Ray& ray) const;
+  auto intersect_scene(const Ray& ray) const -> Hit;
 
   template<typename Rng>
-  glm::vec3 sample_unit_sphere(Rng& rng);
+  auto trace(const Ray& ray, Rng& rng, int depth = 0) -> glm::vec3;
+
+  auto on_miss(const Ray& ray) const -> glm::vec3;
+
+  template<typename Rng>
+  auto sample_unit_sphere(Rng& rng) -> glm::vec3;
 
   void create_scene();
 
-  std::vector<Pixel> m_accumulator;
+  std::vector<glm::vec3> m_accumulator;
+
+  std::vector<std::minstd_rand> m_rngs;
+
+  int m_resolution_divisor = 2;
 
   int m_sample_count = 0;
 
@@ -163,7 +149,12 @@ ExampleApp::ExampleApp(GLFWwindow* window)
   int h = 0;
   glfwGetWindowSize(window, &w, &h);
 
+  w /= m_resolution_divisor;
+  h /= m_resolution_divisor;
+
   m_accumulator.resize(w * h);
+
+  m_rngs.resize(w * h);
 
   reset();
 
@@ -173,12 +164,18 @@ ExampleApp::ExampleApp(GLFWwindow* window)
 void
 ExampleApp::reset()
 {
-  std::seed_seq seed{ int(m_accumulator.size()), 1234 };
+  std::seed_seq seed{ int(m_rngs.size()), 1234 };
 
   std::mt19937 seed_rng(seed);
 
-  for (int i = 0; i < int(m_accumulator.size()); i++)
-    m_accumulator[i] = Pixel(seed_rng());
+  for (int i = 0; i < int(m_rngs.size()); i++) {
+
+    m_accumulator[i] = glm::vec3(0, 0, 0);
+
+    std::seed_seq pixel_seed{ i, int(seed_rng()) };
+
+    m_rngs[i] = std::minstd_rand(pixel_seed);
+  }
 
   m_sample_count = 0;
 }
@@ -196,19 +193,16 @@ ExampleApp::create_scene()
   Material emissive_mat_a;
   Material emissive_mat_b;
 
-  emissive_mat_a.emission = glm::vec3(1, 0, 1);
-  emissive_mat_b.emission = glm::vec3(0, 1, 1);
+  emissive_mat_a.emission = glm::vec3(1, 0, 1) * 50.0f;
+  emissive_mat_b.emission = glm::vec3(0, 1, 1) * 20.0f;
 
   m_materials.emplace_back(diffuse_mat);
   m_materials.emplace_back(emissive_mat_a);
   m_materials.emplace_back(emissive_mat_b);
 
   m_spheres.emplace_back(Sphere{ glm::vec3(-1.2, 0, -3), 0.5f });
-
   m_spheres.emplace_back(Sphere{ glm::vec3(0, 0, -3), 0.5f });
-
   m_spheres.emplace_back(Sphere{ glm::vec3(1.2, 0, -3), 0.5f });
-
   m_spheres.emplace_back(Sphere{ glm::vec3(0, -100.5, -3), 100 });
 
   // Assign the emissive materials to the first and third smaller spheres.
@@ -238,41 +232,47 @@ ExampleApp::intersect_scene(const Ray& ray) const
 }
 
 void
-ExampleApp::render(float* rgb_buffer, int w, int h)
+ExampleApp::render(GLuint texture_id, int window_w, int window_h)
 {
-  float aspect = float(w) / h;
+  const int w = window_w / m_resolution_divisor;
+  const int h = window_h / m_resolution_divisor;
 
-  float rcp_w = 1.0f / w;
-  float rcp_h = 1.0f / h;
+  const float aspect = float(w) / h;
 
-  float sample_weight = 1.0f / (m_sample_count + 1.0f);
+  const float rcp_w = 1.0f / w;
+  const float rcp_h = 1.0f / h;
 
 #pragma omp parallel for
 
   for (int i = 0; i < (w * h); i++) {
 
-    int x = i % w;
-    int y = i / w;
+    const int x = i % w;
+    const int y = i / w;
 
-    glm::vec2 uv_min((x + 0.0f) * rcp_w, (y + 0.0f) * rcp_h);
-    glm::vec2 uv_max((x + 1.0f) * rcp_w, (y + 1.0f) * rcp_h);
+    const glm::vec2 uv_min((x + 0.0f) * rcp_w, (y + 0.0f) * rcp_h);
+    const glm::vec2 uv_max((x + 1.0f) * rcp_w, (y + 1.0f) * rcp_h);
 
-    auto ray = generate_ray(uv_min, uv_max, aspect, m_accumulator[i].rng);
+    const auto ray = generate_ray(uv_min, uv_max, aspect, m_rngs[i]);
 
-    m_accumulator[i].color += trace(ray, m_accumulator[i].rng);
-
-    rgb_buffer[(i * 3) + 0] = m_accumulator[i].color.x * sample_weight;
-    rgb_buffer[(i * 3) + 1] = m_accumulator[i].color.y * sample_weight;
-    rgb_buffer[(i * 3) + 2] = m_accumulator[i].color.z * sample_weight;
+    m_accumulator[i] += trace(ray, m_rngs[i]);
   }
 
   m_sample_count++;
+
+  set_sample_weight(1.0f / m_sample_count);
+
+  load_rgb(&m_accumulator[0], w, h, texture_id);
 }
 
 void
 ExampleApp::on_resize(int w, int h)
 {
+  w = w / m_resolution_divisor;
+  h = h / m_resolution_divisor;
+
   m_accumulator.resize(w * h);
+
+  m_rngs.resize(w * h);
 
   reset();
 
@@ -281,24 +281,20 @@ ExampleApp::on_resize(int w, int h)
 
 template<typename Rng>
 Ray
-ExampleApp::generate_ray(glm::vec2 uv_min,
-                         glm::vec2 uv_max,
-                         float aspect,
-                         Rng& rng)
+ExampleApp::generate_ray(glm::vec2 uv_min, glm::vec2 uv_max, float aspect, Rng& rng)
 {
   std::uniform_real_distribution<float> x_dist(uv_min.x, uv_max.x);
   std::uniform_real_distribution<float> y_dist(uv_min.y, uv_max.y);
 
-  float fov_x = 0.5 * aspect;
-  float fov_y = 0.5;
+  const float fov_x = 0.5 * aspect;
+  const float fov_y = 0.5;
 
-  float u = x_dist(rng);
-  float v = y_dist(rng);
+  const float u = x_dist(rng);
+  const float v = y_dist(rng);
 
-  glm::vec3 org = get_camera_position();
+  const glm::vec3 org = get_camera_position();
 
-  glm::vec3 dir(
-    ((2.0f * u) - 1.0f) * fov_x, (1.0f - (2.0f * v)) * fov_y, -1.0f);
+  const glm::vec3 dir(((2.0f * u) - 1.0f) * fov_x, (1.0f - (2.0f * v)) * fov_y, -1.0f);
 
   return Ray{ org, get_camera_rotation_transform() * glm::normalize(dir) };
 }
@@ -310,19 +306,18 @@ ExampleApp::trace(const Ray& ray, Rng& rng, int depth)
   if (depth >= 3)
     return glm::vec3(0, 0, 0);
 
-  auto hit = intersect_scene(ray);
+  const auto hit = intersect_scene(ray);
 
   if (!hit)
     return on_miss(ray);
 
-  auto refl_pos = hit.pos;
+  const auto refl_pos = hit.pos;
 
-  auto refl_dir = glm::normalize(hit.nrm + sample_unit_sphere(rng));
+  const auto refl_dir = glm::normalize(hit.nrm + sample_unit_sphere(rng));
 
   const auto& material = m_materials[hit.material];
 
-  auto diffuse =
-    trace(Ray{ refl_pos, refl_dir }, rng, depth + 1) * material.diffuse;
+  const auto diffuse = trace(Ray{ refl_pos, refl_dir }, rng, depth + 1) * material.diffuse;
 
   return diffuse + material.emission;
 }
@@ -335,7 +330,7 @@ ExampleApp::sample_unit_sphere(Rng& rng)
 
   for (;;) {
 
-    glm::vec3 d(dist(rng), dist(rng), dist(rng));
+    const glm::vec3 d(dist(rng), dist(rng), dist(rng));
 
     if (glm::dot(d, d) <= 1)
       return glm::normalize(d);
@@ -349,11 +344,11 @@ ExampleApp::on_miss(const Ray& ray) const
 {
   const glm::vec3 up(0, 1, 0);
 
-  float level = (glm::dot(ray.dir, up) + 1) * 0.5;
+  const float level = (glm::dot(ray.dir, up) + 1) * 0.5;
 
-  glm::vec3 lo_color(1.0, 1.0, 1.0);
+  const glm::vec3 lo_color(1.0, 1.0, 1.0);
 
-  glm::vec3 hi_color(0.5, 0.7, 1.0);
+  const glm::vec3 hi_color(0.5, 0.7, 1.0);
 
   return (level * hi_color) + ((1 - level) * lo_color);
 }
