@@ -106,7 +106,7 @@ void main()
 
   vec3 color = mix(ldr_color, to_srgb(ldr_color), g_srgb);
 
-  gl_FragColor = vec4(ldr_color, 1.0);
+  gl_FragColor = vec4(color, 1.0);
 }
 )";
 

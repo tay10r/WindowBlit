@@ -346,9 +346,9 @@ ExampleApp::on_miss(const Ray& ray) const
 
   const float level = (glm::dot(ray.dir, up) + 1) * 0.5;
 
-  const glm::vec3 lo_color(1.0, 1.0, 1.0);
+  const glm::vec3 lo_color = glm::vec3(1.0, 1.0, 1.0);
 
-  const glm::vec3 hi_color(0.5, 0.7, 1.0);
+  const glm::vec3 hi_color = glm::vec3(0.5, 0.7, 1.0);
 
   return (level * hi_color) + ((1 - level) * lo_color);
 }
