@@ -217,7 +217,7 @@ class AppBaseImpl final
 
   void on_frame(AppBase& app)
   {
-    //app.render_imgui();
+    app.render_imgui();
 
     if (m_camera->is_moving()) {
 
