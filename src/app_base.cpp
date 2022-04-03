@@ -272,8 +272,6 @@ class AppBaseImpl final
 
     glUseProgram(m_program);
 
-    std::cout << m_sample_weight << std::endl;
-
     glUniform1f(m_sample_weight_uniform_location, m_sample_weight);
 
     glUniform1f(m_tone_mapping_location, m_tone_mapping);

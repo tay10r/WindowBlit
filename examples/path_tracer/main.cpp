@@ -133,9 +133,11 @@ private:
 
   std::vector<std::minstd_rand> m_rngs;
 
-  int m_resolution_divisor = 2;
+  int m_resolution_divisor = 8;
 
   int m_sample_count = 0;
+
+  int m_samples_per_frame = 512;
 
   std::vector<Sphere> m_spheres;
 
@@ -234,6 +236,8 @@ ExampleApp::intersect_scene(const Ray& ray) const
 void
 ExampleApp::render(GLuint texture_id, int window_w, int window_h)
 {
+  reset();
+
   const int w = window_w / m_resolution_divisor;
   const int h = window_h / m_resolution_divisor;
 
@@ -242,22 +246,24 @@ ExampleApp::render(GLuint texture_id, int window_w, int window_h)
   const float rcp_w = 1.0f / w;
   const float rcp_h = 1.0f / h;
 
+  for (int s = 0; s < m_samples_per_frame; s++) {
 #pragma omp parallel for
 
-  for (int i = 0; i < (w * h); i++) {
+    for (int i = 0; i < (w * h); i++) {
 
-    const int x = i % w;
-    const int y = i / w;
+      const int x = i % w;
+      const int y = i / w;
 
-    const glm::vec2 uv_min((x + 0.0f) * rcp_w, (y + 0.0f) * rcp_h);
-    const glm::vec2 uv_max((x + 1.0f) * rcp_w, (y + 1.0f) * rcp_h);
+      const glm::vec2 uv_min((x + 0.0f) * rcp_w, (y + 0.0f) * rcp_h);
+      const glm::vec2 uv_max((x + 1.0f) * rcp_w, (y + 1.0f) * rcp_h);
 
-    const auto ray = generate_ray(uv_min, uv_max, aspect, m_rngs[i]);
+      const auto ray = generate_ray(uv_min, uv_max, aspect, m_rngs[i]);
 
-    m_accumulator[i] += trace(ray, m_rngs[i]);
+      m_accumulator[i] += trace(ray, m_rngs[i]);
+    }
+
+    m_sample_count++;
   }
-
-  m_sample_count++;
 
   set_sample_weight(1.0f / m_sample_count);
 

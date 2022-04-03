@@ -149,7 +149,8 @@ if(WINDOWBLIT_EXAMPLES)
 
   set(examples
     minimal
-    path_tracer)
+    path_tracer
+    planets)
 
   foreach(example ${examples})
 
