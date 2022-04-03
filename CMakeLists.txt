@@ -79,6 +79,8 @@ if(NOT WINDOWBLIT_DISABLE_IMGUI)
     imstb_rectpack.h
     imstb_textedit.h
     imstb_truetype.h
+    misc/cpp/imgui_stdlib.h
+    misc/cpp/imgui_stdlib.cpp
     backends/imgui_impl_glfw.cpp
     backends/imgui_impl_glfw.h
     backends/imgui_impl_opengl3.cpp
@@ -95,6 +97,7 @@ if(NOT WINDOWBLIT_DISABLE_IMGUI)
   target_include_directories(windowblit_imgui
     PUBLIC
       "${imgui_SOURCE_DIR}"
+      "${imgui_SOURCE_DIR}/misc/cpp"
       "${imgui_SOURCE_DIR}/backends")
 
   target_link_libraries(windowblit_imgui PUBLIC glad glfw)
